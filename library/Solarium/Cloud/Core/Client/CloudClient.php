@@ -31,6 +31,7 @@ namespace Solarium\Cloud\Core\Client;
 
 use Solarium\Cloud\Core\Zookeeper\ZkStateReader;
 use Solarium\Cloud\Exception\UnsupportedOperationException;
+use Solarium\Exception\InvalidArgumentException;
 use Solarium\Core\Client\Client;
 use Solarium\Core\Client\Endpoint;
 use Solarium\Core\Client\Request;
@@ -57,11 +58,17 @@ class CloudClient extends Client
     protected $clientTimeout = 30000;
     protected $collection;
 
+    /* @var ZkStateReader */
     protected $zkStateReader;
     protected $zkHosts;
     protected $zkTimeout = 10000;
     protected $directUpdatesToLeadersOnly;
 
+    /**
+     * CloudClient constructor.
+     * @param null $options
+     * @param null $eventDispatcher
+     */
     public function __construct($options = null, $eventDispatcher = null)
     {
         $this->eventDispatcher = $eventDispatcher;
@@ -69,47 +76,8 @@ class CloudClient extends Client
     }
 
     /**
-     * Initialization hook.
-     */
-    protected function init()
-    {
-        if ($this->eventDispatcher === null) {
-            $this->eventDispatcher = new EventDispatcher();
-        }
-
-        if(!array_key_exists('zkhosts', $this->options))
-            throw new InvalidArgumentException('"zkhosts" option is not defined but is required');
-
-        foreach ($this->options as $name => $value) {
-            switch ($name) {
-                case 'zkhosts':
-                    $this->zkHosts = $value;
-                    break;
-                case 'collection':
-                    $this->collection = $value;
-                    break;
-                case 'querytype':
-                    $this->registerQueryTypes($value);
-                    break;
-                case 'plugin':
-                    $this->registerPlugins($value);
-                    break;
-                case 'zktimeout':
-                    $this->zkTimeout = $value;
-                    break;
-                case 'clienttimeout':
-                    $this->clientTimeout = $value;
-                    break;
-            }
-        }
-
-        $this->zkStateReader = new ZkStateReader($this->zkHosts);
-        $loadBalancerOptions = array('failoverenabled' => true);
-        $this->registerPlugin('loadbalancer', new Loadbalancer($loadBalancerOptions));
-    }
-
-    /**
      * This method is unsupported in this client.
+     * @throws UnsupportedOperationException
      */
     public function createEndpoint($options = null, $setAsDefault = false)
     {
@@ -118,6 +86,7 @@ class CloudClient extends Client
 
     /**
      * This method is unsupported in this client.
+     * @throws UnsupportedOperationException
      */
     public function addEndpoint($endpoint)
     {
@@ -126,6 +95,7 @@ class CloudClient extends Client
 
     /**
      * This method is unsupported in this client.
+     * @throws UnsupportedOperationException
      */
     public function addEndpoints(array $endpoints)
     {
@@ -134,30 +104,38 @@ class CloudClient extends Client
 
     /**
      * This method is unsupported in this client.
+     * @throws UnsupportedOperationException
      */
     public function setEndpoints($endpoints)
     {
         throw new UnsupportedOperationException("You cannot set endpoints in the SolrCloud client.");
     }
 
+    /**
+     * @param Request $request
+     * @param null    $endpoint
+     * @return \Solarium\Core\Client\Response
+     */
     public function executeRequest($request, $endpoint = null)
     {
-        if($endpoint != null)
+        if ($endpoint != null) {
             throw new UnsupportedOperationException("You cannot set endpoints in the SolrCloud client.");
+        }
 
-        if(empty($this->collection))
+        if (empty($this->collection)) {
             throw new UnsupportedOperationException("No collection is specified.");
+        }
 
         $loadbalancer = $this->getPlugin('loadbalancer');
 
         // Set endpoints for collection
         $this->endpoints = $this->zkStateReader->getCollectionEndpoints($this->collection);
         $endpoints = array_keys($this->zkStateReader->getCollectionEndpoints($this->collection));
-        $endpoints_loadbalancer = array();
-        foreach($endpoints as $endpoint_id) {
-            $endpoints_loadbalancer[$endpoint_id] = 1; // set weight to 1
+        foreach ($endpoints as $endpointId) {
+            $endpointsLoadbalancer[$endpointId] = 1; // set weight to 1
         }
-        $loadbalancer->setEndpoints($endpoints_loadbalancer);
+        //TODO add check if exists.
+        $loadbalancer->setEndpoints($endpointsLoadbalancer);
 
         // Get first shard leader we can find as a default Endpoint
         $leaders = $this->zkStateReader->getCollectionShardLeadersEndpoints($this->collection);
@@ -185,7 +163,7 @@ class CloudClient extends Client
      */
     public function getDefaultCollection()
     {
-      return $this->getOption('defaultCollection');
+        return $this->getOption('defaultCollection');
     }
 
     /**
@@ -205,18 +183,24 @@ class CloudClient extends Client
     }
 
     /**
-     * @param $collection
+     * @param string $collection
      */
-    public function setCollection($collection)
+    public function setCollection(string $collection)
     {
         $this->collection = $collection;
     }
 
-    public function getIdField()
+    /**
+     * @return mixed
+     */
+    public function getIdField(): string
     {
         return $this->getOption('idField');
     }
 
+    /**
+     * @param string $idField
+     */
     public function setIdField(string $idField)
     {
         $this->setOption('idField', $idField);
@@ -246,6 +230,9 @@ class CloudClient extends Client
         return $this->zkTimeout;
     }
 
+    /**
+     * @param int $timeout
+     */
     public function setZkTimeout(int $timeout)
     {
         $this->zkTimeout = $timeout;
@@ -274,4 +261,46 @@ class CloudClient extends Client
     {
         $this->directUpdatesToLeadersOnly = false;
     }
+
+    /**
+     * Initialization hook.
+     */
+    protected function init()
+    {
+        if ($this->eventDispatcher === null) {
+            $this->eventDispatcher = new EventDispatcher();
+        }
+
+        if (array_key_exists('zkhosts', $this->options) === false) {
+            throw new InvalidArgumentException('"zkhosts" option is not defined but is required');
+        }
+
+        foreach ($this->options as $name => $value) {
+            switch ($name) {
+                case 'zkhosts':
+                    $this->zkHosts = $value;
+                    break;
+                case 'collection':
+                    $this->collection = $value;
+                    break;
+                case 'querytype':
+                    $this->registerQueryTypes($value);
+                    break;
+                case 'plugin':
+                    $this->registerPlugins($value);
+                    break;
+                case 'zktimeout':
+                    $this->zkTimeout = $value;
+                    break;
+                case 'clienttimeout':
+                    $this->clientTimeout = $value;
+                    break;
+            }
+        }
+
+        $this->zkStateReader = new ZkStateReader($this->zkHosts);
+        $loadBalancerOptions = array('failoverenabled' => true);
+        $this->registerPlugin('loadbalancer', new Loadbalancer($loadBalancerOptions));
+    }
+
 }

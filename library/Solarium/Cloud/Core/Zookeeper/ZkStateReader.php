@@ -81,7 +81,7 @@ class ZkStateReader
 
     const URL_SCHEME = 'urlScheme';
 
-    /** @var A view of the current state of all collections; combines all the different state sources into a single view. */
+    /** @var array A view of the current state of all collections; combines all the different state sources into a single view. */
     protected $clusterStates;
 
     const  GET_LEADER_RETRY_INTERVAL_MS = 50;
@@ -95,7 +95,7 @@ class ZkStateReader
     /** Last seen ZK version of clusterstate.json. */
     protected $legacyClusterStateVersion = 0;
 
-    /** @var  Each individual collection state combined, without the legacy clusterstate.json values */
+    /** @var  array Each individual collection state combined, without the legacy clusterstate.json values */
     protected $collectionStates = array();
 
     /** @var  array All the live nodes */
@@ -106,7 +106,7 @@ class ZkStateReader
     protected $securityData;
     protected $collectionWatches;
 
-    /** @var Zookeeper  */
+    /** @var Zookeeper Zookeeper client */
     protected $zkClient;
     protected $collections;
     protected $aliases;
@@ -115,18 +115,263 @@ class ZkStateReader
 
     /**
      * ZkStateReader constructor.
-     * @param string $hosts Comma separated host:port pairs, each corresponding to a zk server. e.g. "127.0.0.1:2181,127.0.0.1:2182,127.0.0.1:2183"
+     * @param string           $hosts Comma separated host:port pairs, each corresponding to a zk server. e.g. "127.0.0.1:2181,127.0.0.1:2182,127.0.0.1:2183"
+     * @param AdapterInterface $cache Caching object
      */
-    function __construct(string $hosts, AdapterInterface $cache = null)
+    public function __construct(string $hosts, AdapterInterface $cache = null)
     {
         //TODO check cache to see if we need to connect to zookeeper
+        $zkState = null;
 
-        if($cache != null)
+        if ($cache != null) {
             $zkState = $cache->getItem("solarium-cloud.zookeeper");
+        }
         if ($cache == null || !$zkState->isHit()) {
             $this->zkClient = new Zookeeper($hosts, null, $this->zkTimeout);
             $this->readZookeeper();
         }
+    }
+
+    /**
+     * @return array
+     */
+    public function getCollectionAliases(): array
+    {
+        if ($this->aliases != null && isset($this->aliases[self::COLLECTION_PROP])) {
+            return $this->aliases[self::COLLECTION_PROP];
+        } else {
+            return array();
+        }
+    }
+
+    /**
+     * @return array
+     */
+    public function getCollectionList(): array
+    {
+        if ($this->collections != null) {
+            return $this->collections;
+        } else {
+            return array();
+        }
+    }
+
+    /**
+     * @return array
+     */
+    public function getCollectionStates(): array
+    {
+        if ($this->collectionStates != null) {
+            return $this->collectionStates;
+        } else {
+            return array();
+        }
+    }
+
+    /**
+     * @param string $collection
+     * @return array
+     * @throws ZookeeperException
+     */
+    public function getCollectionState(string $collection): array
+    {
+        $collection = $this->getCollectionName($collection);
+        if ($this->collectionStates != null) {
+            if (!isset($this->collectionStates[$collection])) {
+                throw new ZookeeperException("Collection '$collection' does not exist.'");
+            }
+
+            return $this->collectionStates[$collection];
+        } else {
+            return array();
+        }
+    }
+
+    /**
+     * @return array
+     */
+    public function getClusterStates(): array
+    {
+        if ($this->clusterStates != null) {
+            return $this->clusterStates;
+        } else {
+            return array();
+        }
+    }
+
+    /**
+     * @return array
+     */
+    public function getClusterProperties(): array
+    {
+        if ($this->clusterProperties != null) {
+            return $this->clusterProperties;
+        } else {
+            return array();
+        }
+    }
+
+    /**
+     * @return array Live nodes
+     */
+    public function getLiveNodes(): array
+    {
+        if ($this->liveNodes != null) {
+            return $this->liveNodes;
+        } else {
+            return array();
+        }
+    }
+
+    /**
+     * @param string $collection
+     * @return array
+     * @throws ZookeeperException
+     */
+    public function getActiveCollectionBaseUrls(string $collection): array
+    {
+        $collection = $this->getCollectionName($collection);
+        $state = $this->getCollectionState($collection);
+        $replicas = array();
+        if (!empty($state)) {
+            foreach ($state[self::SHARDS_PROP] as $shardname => $shard) {
+                foreach ($shard[self::REPLICAS_PROP] as $replicaName => $replica) {
+                    if (isset($replica[self::STATE_PROP]) && $replica[self::STATE_PROP] === 'active') {
+                        $baseUrl = $replica[self::BASE_URL_PROP];
+                        if (!in_array($baseUrl, $replicas)) {
+                            $replicas[$replica[self::NODE_NAME_PROP].'_'.$collection] = $baseUrl;
+                        }
+                    }
+                }
+            }
+        } else {
+            throw new ZookeeperException("Collection '$collection' does not exist.'");
+        }
+
+        return $replicas;
+    }
+
+    /**
+     * @param string $collection Collection name
+     * @return array List of leaders of collection shards
+     * @throws ZookeeperException
+     */
+    public function getCollectionShardLeadersBaseUrl(string $collection): array
+    {
+        $collection = $this->getCollectionName($collection);
+        $state = $this->getCollectionState($collection);
+        $leaders = array();
+        if (!empty($state)) {
+            foreach ($state[self::SHARDS_PROP] as $shardname => $shard) {
+                foreach ($shard[self::REPLICAS_PROP] as $replicaName => $replica) {
+                    if (isset($replica[self::LEADER_PROP]) && $replica[self::LEADER_PROP] === 'true') {
+                        $baseUrl = $replica[self::BASE_URL_PROP];
+                        if (!in_array($baseUrl, $leaders)) {
+                            $leaders[$replica[self::NODE_NAME_PROP].'_'.$collection] = $baseUrl;
+                        }
+                    }
+                }
+            }
+        } else {
+            throw new ZookeeperException("Collection '$collection' does not exist.'");
+        }
+
+        return $leaders;
+    }
+
+    /**
+     * Return all active collection Endpoints
+     * @param string $collection Collection name
+     * @return array An array of Endpoints where the keys are the ids of the Endpoints
+     */
+    public function getCollectionEndpoints(string $collection): array
+    {
+        $collection = $this->getCollectionName($collection);
+        $endpoints = array();
+        $urls = $this->getActiveCollectionBaseUrls($collection);
+        foreach ($urls as $id => $url) {
+            $options = array();
+            $options = parse_url($url);
+            $options['core'] = $collection;
+            $options['key'] = $id;
+            $endpoints[$id] = new Endpoint($options);
+        }
+
+        return $endpoints;
+    }
+
+    /**
+     * Return the collection shard leaders Endpoints
+     * @param string $collection Collection
+     * @return array An array of Endpoints where the keys are the ids of the Endpoints
+     */
+    public function getCollectionShardLeadersEndpoints(string $collection): array
+    {
+        $collection = $this->getCollectionName($collection);
+        $endpoints = array();
+        $urls = $this->getCollectionShardLeadersBaseUrl($collection);
+        foreach ($urls as $id => $url) {
+            $options = parse_url($url);
+            $options['core'] = $collection;
+            $options['key'] = $id;
+            $endpoints[$id] = new Endpoint($options);
+        }
+
+        return $endpoints;
+    }
+
+    /**
+     * Returns the official collection name
+     * @param  string $name Collection name
+     * @return string Name of the collection
+     * @throws ZookeeperException
+     */
+    public function getCollectionName(string $name): string
+    {
+        if (array_search($name, $this->collections) === false) {
+            $aliases = $this->getCollectionAliases();
+            if (!empty($aliases)) {
+                if (array_key_exists($name, $aliases)) {
+                    return $aliases[$name];
+                }
+            }
+        } else {
+            return $name;
+        }
+        throw new ZookeeperException("Collection '$name' not found.");
+    }
+
+    /**
+     * @param array  $zkHosts
+     * @param string $chroot
+     * @return string
+     * @throws InvalidArgumentException
+     */
+    public static function buildZkHostString(array $zkHosts, string $chroot = "")
+    {
+        if (!is_array($zkHosts) || empty($zkHosts)) {
+            throw new InvalidArgumentException("Cannot create CloudSearchClient without valid ZooKeeper host; none specified!");
+        }
+        $zkHostString = "";
+        $lastIndexValue = count($zkHosts) - 1;
+        $i = 0;
+        foreach ($zkHosts as $zkHost) {
+            $zkHostString .= $zkHost;
+            if ($i < $lastIndexValue) {
+                $zkHostString .= ',';
+            }
+            $i++;
+        }
+
+        if (!empty($chroot)) {
+            if (substr($chroot, 0, 1) == '/') {
+                $zkHostString .= $chroot;
+            } else {
+                throw new InvalidArgumentException("The chroot must start with a forward slash.");
+            }
+        }
+
+        return $zkHostString;
     }
 
     /**
@@ -165,9 +410,9 @@ class ZkStateReader
         //Compatibility for older versions of Solr
         $this->readData(self::CLUSTER_STATE, $this->legacyCollectionStates, true, true);
 
-        if(is_array($this->collections)) {
+        if (is_array($this->collections)) {
             foreach ($this->collections as $i => $collection) {
-                $stateFile = self::COLLECTIONS_ZKNODE . '/' . $collection . '/' . self::COLLECTION_STATE;
+                $stateFile = self::COLLECTIONS_ZKNODE.'/'.$collection.'/'.self::COLLECTION_STATE;
                 if ($this->zkClient->exists($stateFile)) {
                     $this->collectionStates = array_merge($this->collectionStates, json_decode($this->zkClient->get($stateFile), true));
                 }
@@ -195,12 +440,11 @@ class ZkStateReader
         $this->liveNodes = $this->getChildren(self::LIVE_NODES_ZKNODE);
     }
 
-    protected function readData(string $location, &$property, bool $json_decode, bool $json_assoc = false)
+    protected function readData(string $location, &$property, bool $jsonDecode, bool $jsonAssoc = false)
     {
-        if($this->zkClient->exists($location)) {
-            $property = $json_decode ? json_decode($this->zkClient->get($location), $json_assoc) : $this->zkClient->get($location);
-        }
-        else {
+        if ($this->zkClient->exists($location)) {
+            $property = $jsonDecode ? json_decode($this->zkClient->get($location), $jsonAssoc) : $this->zkClient->get($location);
+        } else {
             throw new ZookeeperException("Cannot read data from location '$location'");
         }
     }
@@ -208,6 +452,7 @@ class ZkStateReader
     /**
      * @param string $location
      * @return array
+     * @throws ZookeeperException
      */
     protected function getChildren(string $location): array
     {
@@ -216,232 +461,6 @@ class ZkStateReader
         } else {
             throw new ZookeeperException("Cannot read data from location '$location'");
         }
-        return array();
     }
-
-    /**
-     * @return array
-     */
-    public function getCollectionAliases(): array
-    {
-        if($this->aliases != null && isset($this->aliases[self::COLLECTION_PROP]))
-            return $this->aliases[self::COLLECTION_PROP];
-        else
-            return array();
-    }
-
-    /**
-     * @return array
-     */
-    public function getCollectionList(): array
-    {
-        if($this->collections != null)
-            return $this->collections;
-        else
-            return array();
-    }
-
-    /**
-     * @return array
-     */
-    public function getCollectionStates(): array
-    {
-        if($this->collectionStates != null)
-            return $this->collectionStates;
-        else
-            return array();
-    }
-
-    /**
-     * @param string $collection
-     * @return array
-     * @throws ZookeeperException
-     */
-    public function getCollectionState(string $collection): array
-    {
-        $collection = $this->getCollectionName($collection);
-        if($this->collectionStates != null) {
-            if(!isset($this->collectionStates[$collection]))
-                throw new ZookeeperException("Collection '$collection' does not exist.'");
-            return $this->collectionStates[$collection];
-        }
-        else
-            return array();
-    }
-
-    /**
-     * @return array
-     */
-    public function getClusterStates(): array
-    {
-        if($this->clusterStates != null)
-            return $this->clusterStates;
-        else
-            return array();
-    }
-
-    /**
-     * @return array
-     */
-    public function getClusterProperties(): array
-    {
-        if($this->clusterProperties != null)
-            return $this->clusterProperties;
-        else
-            return array();
-    }
-
-    /**
-     * @return array live nodes
-     */
-    public function getLiveNodes(): array
-    {
-        if($this->liveNodes != null)
-            return $this->liveNodes;
-        else
-            return array();
-    }
-
-    /**
-     * @param $collection
-     * @return array
-     * @throws ZookeeperException
-     */
-    public function getActiveCollectionBaseUrls($collection): array
-    {
-        $collection = $this->getCollectionName($collection);
-        $state = $this->getCollectionState($collection);
-        $replicas = array();
-        if (!empty($state)) {
-            foreach ($state[self::SHARDS_PROP] as $shardname => $shard) {
-                foreach($shard[self::REPLICAS_PROP] as $replicaname => $replica) {
-                    if (isset($replica[self::STATE_PROP]) && $replica[self::STATE_PROP] === 'active') {
-                        $base_url = $replica[self::BASE_URL_PROP];
-                        if(!in_array($base_url, $replicas))
-                            $replicas[$replica[self::NODE_NAME_PROP].'_'.$collection] = $base_url;
-                    }
-                }
-            }
-        }
-        else {
-            throw new ZookeeperException("Collection '$collection' does not exist.'");
-        }
-        return $replicas;
-    }
-
-    /**
-     * @param $collection
-     * @return array
-     * @throws ZookeeperException
-     */
-    public function getCollectionShardLeadersBaseUrl($collection): array
-    {
-        $collection = $this->getCollectionName($collection);
-        $state = $this->getCollectionState($collection);
-        $leaders = array();
-        if (!empty($state)) {
-            foreach ($state[self::SHARDS_PROP] as $shardname => $shard) {
-                foreach($shard[self::REPLICAS_PROP] as $replicaName => $replica) {
-                    if (isset($replica[self::LEADER_PROP]) && $replica[self::LEADER_PROP] === 'true') {
-                        $baseUrl = $replica[self::BASE_URL_PROP];
-                        if(!in_array($baseUrl, $leaders))
-                            $leaders[$replica[self::NODE_NAME_PROP].'_'.$collection] = $baseUrl;
-                    }
-                }
-            }
-        }
-        else {
-            throw new ZookeeperException("Collection '$collection' does not exist.'");
-        }
-        return $leaders;
-    }
-
-    /**
-     * @param $collection
-     * @return array
-     */
-    public function getCollectionEndpoints($collection): array
-    {
-        $collection = $this->getCollectionName($collection);
-        $endpoints = array();
-        $urls = $this->getActiveCollectionBaseUrls($collection);
-        foreach($urls as $id => $url) {
-            $options = array();
-            $options = parse_url($url);
-            $options['core'] = $collection;
-            $options['key'] = $id;
-            $endpoints[$id] = new Endpoint($options);
-        }
-        return $endpoints;
-    }
-
-    /**
-     * @param $collection
-     * @return array
-     */
-    public function getCollectionShardLeadersEndpoints($collection): array
-    {
-        $collection = $this->getCollectionName($collection);
-        $endpoint = array();
-        $urls = $this->getCollectionShardLeadersBaseUrl($collection);
-        foreach($urls as $id => $url) {
-            $options = array();
-            $options = parse_url($url);
-            $options['core'] = $collection;
-            $options['key'] = $id;
-            $endpoints[$id] = new Endpoint($options);
-        }
-        return $endpoints;
-    }
-
-    /**
-     * @param string $name
-     * @return string
-     */
-    public function getCollectionName(string $name): string
-    {
-        if(array_search($name, $this->collections) === false) {
-            $aliases = $this->getCollectionAliases();
-            if (!empty($aliases)) {
-                if(array_key_exists($name, $aliases)) {
-                    return $aliases[$name];
-                }
-            }
-        }
-        else {
-            return $name;
-        }
-        throw new ZookeeperException("Collection '$name' not found.");
-    }
-
-    /**
-     * @param array $zkHosts
-     * @param string $chroot
-     */
-    public static function buildZkHostString(array $zkHosts, string $chroot = "")
-    {
-        if (!is_array($zkHosts) || is_empty($zkHosts)) {
-            throw new InvalidArgumentException("Cannot create CloudSearchClient without valid ZooKeeper host; none specified!");
-        }
-        $zkHostString = "";
-        $lastIndexValue = count($zkHosts) - 1;
-        $i = 0;
-        foreach ($zkHosts as $zkHost) {
-            $zkHostString .= $zkHost;
-            if ($i < $lastIndexValue) {
-                $zkHostString .= ',';
-            }
-            $i++;
-        }
-
-        if (!is_empty($chroot)) {
-            if (substr($chroot, 0, 1) == '/') {
-                $zkHostString .= $chroot;
-            } else {
-                throw new InvalidArgumentException("The chroot must start with a forward slash.");
-            }
-        }
-    }
-
 
 }
