@@ -31,6 +31,10 @@ namespace Solarium\Cloud\Exception;
 
 use Solarium\Exception\ExceptionInterface;
 
+/**
+ * Class ZookeeperException
+ * @package Solarium\Cloud\Exception
+ */
 class ZookeeperException extends \Exception implements ExceptionInterface
 {
 

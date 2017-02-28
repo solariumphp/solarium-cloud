@@ -33,7 +33,10 @@ use PHPUnit\Framework\TestCase;
 use Solarium\Cloud\Core\Zookeeper\ZkStateReader;
 use Symfony\Component\Cache\Adapter\FilesystemAdapter;
 
-
+/**
+ * Class ZkStateReaderTest
+ * @package Solarium\Cloud\Tests\Core\Zookeeper\ZkClusterState
+ */
 class ZkStateReaderTest extends TestCase
 {
     protected $zkStateReader;

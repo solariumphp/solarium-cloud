@@ -31,6 +31,11 @@ namespace Solarium\Cloud\Exception;
 
 use Solarium\Exception\InvalidArgumentException;
 
-class UnsupportedOperationException extends InvalidArgumentException {
+/**
+ * Class UnsupportedOperationException
+ * @package Solarium\Cloud\Exception
+ */
+class UnsupportedOperationException extends InvalidArgumentException
+{
 
 }
