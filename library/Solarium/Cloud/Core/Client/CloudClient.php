@@ -38,6 +38,7 @@ use Solarium\Core\Client\Request;
 use Solarium\Core\Event\Events;
 use Solarium\Core\Event\PreExecuteRequest as PreExecuteRequestEvent;
 use Solarium\Core\Event\PostExecuteRequest as PostExecuteRequestEvent;
+use Solarium\Core\Query\QueryInterface;
 use Solarium\Plugin\Loadbalancer\Loadbalancer;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 
@@ -55,14 +56,22 @@ use Symfony\Component\EventDispatcher\EventDispatcher;
  */
 class CloudClient extends Client
 {
+    /* @var int */
     protected $clientTimeout = 30000;
+    /* @var string */
     protected $collection;
-
     /* @var ZkStateReader */
     protected $zkStateReader;
+    /* @var string[] */
     protected $zkHosts;
+    /* @var int */
     protected $zkTimeout = 10000;
+    /* @var bool */
     protected $directUpdatesToLeadersOnly;
+    /* @var bool */
+    protected $failoverEnabled = true;
+    /* @var bool */
+    protected $loadBalancingEnabled = true;
 
     /**
      * CloudClient constructor.
@@ -112,8 +121,34 @@ class CloudClient extends Client
     }
 
     /**
+     * This method is unsupported in this client.
+     * @throws UnsupportedOperationException
+     */
+    public function setDefaultEndpoint($endpoint)
+    {
+        throw new UnsupportedOperationException("You cannot set endpoints in the SolrCloud client.");
+    }
+
+    /**
+     * Execute a query.
+     *
+     * @param QueryInterface $query
+     * @param Endpoint|null  $endpoint You cannot set endpoints in the SolrCloud client.
+     *
+     * @return ResultInterface
+     */
+    public function execute(QueryInterface $query, $endpoint = null)
+    {
+        if ($endpoint != null) {
+            throw new UnsupportedOperationException("You cannot set endpoints in the SolrCloud client.");
+        }
+
+        return parent::execute($query);
+    }
+
+    /**
      * @param Request $request
-     * @param null    $endpoint
+     * @param null    $endpoint You cannot set endpoints in the SolrCloud client.
      * @return \Solarium\Core\Client\Response
      */
     public function executeRequest($request, $endpoint = null)
@@ -156,6 +191,210 @@ class CloudClient extends Client
         );
 
         return $response;
+    }
+
+    public function ping(QueryInterface $query, $endpoint = null)
+    {
+        if ($endpoint != null) {
+            throw new UnsupportedOperationException("You cannot set endpoints in the SolrCloud client.");
+        }
+
+        return parent::ping($query);
+    }
+
+    //TODO fix example with zkhosts
+    /**
+     * Execute an update query.
+     *
+     * This is a convenience method that forwards the query to the
+     * execute method, thus allowing for an easy to use and clean API.
+     *
+     * Example usage:
+     * <code>
+     * $client = new Solarium\Cloud\Client;
+     * $query = $client->createUpdate();
+     * $update->addOptimize();
+     * $result = $client->update($update);
+     * </code>
+     *
+     * @see Solarium\QueryType\Update
+     * @see Solarium\Result\Update
+     *
+     * @param QueryInterface|\Solarium\QueryType\Update\Query\Query $query
+     * @param Endpoint|null                                         $endpoint You cannot set endpoints in the SolrCloud client.
+     *
+     * @return \Solarium\QueryType\Update\Result
+     */
+    public function update(QueryInterface $query, $endpoint = null)
+    {
+        if ($endpoint != null) {
+            throw new UnsupportedOperationException("You cannot set endpoints in the SolrCloud client.");
+        }
+
+        return parent::update($query);
+    }
+
+    //TODO fix example with zkhosts
+    /**
+     * Execute a select query.
+     *
+     * This is a convenience method that forwards the query to the
+     * execute method, thus allowing for an easy to use and clean API.
+     *
+     * Example usage:
+     * <code>
+     * $client = new Solarium\Cloud\Client;
+     * $query = $client->createSelect();
+     * $result = $client->select($query);
+     * </code>
+     *
+     * @see Solarium\QueryType\Select
+     * @see Solarium\Result\Select
+     *
+     * @param QueryInterface|\Solarium\QueryType\Select\Query\Query $query
+     * @param Endpoint|null                                         $endpoint You cannot set endpoints in the SolrCloud client.
+     *
+     * @return \Solarium\QueryType\Select\Result\Result
+     */
+    public function select(QueryInterface $query, $endpoint = null)
+    {
+        if ($endpoint != null) {
+            throw new UnsupportedOperationException("You cannot set endpoints in the SolrCloud client.");
+        }
+
+        return $this->execute($query);
+    }
+
+
+    //TODO fix example with zkhosts
+    /**
+     * Execute a MoreLikeThis query.
+     *
+     * This is a convenience method that forwards the query to the
+     * execute method, thus allowing for an easy to use and clean API.
+     *
+     * Example usage:
+     * <code>
+     * $client = new Solarium\Client;
+     * $query = $client->createMoreLikeThis();
+     * $result = $client->moreLikeThis($query);
+     * </code>
+     *
+     * @see Solarium\QueryType\MoreLikeThis
+     * @see Solarium\Result\MoreLikeThis
+     *
+     * @param QueryInterface|\Solarium\QueryType\MoreLikeThis\Query $query
+     * @param Endpoint|null                                         $endpoint You cannot set endpoints in the SolrCloud client.
+     *
+     * @return \Solarium\QueryType\MoreLikeThis\Result
+     */
+    public function moreLikeThis(QueryInterface $query, $endpoint = null)
+    {
+        if ($endpoint != null) {
+            throw new UnsupportedOperationException("You cannot set endpoints in the SolrCloud client.");
+        }
+
+        return parent::moreLikeThis($query);
+    }
+
+    /**
+     * Execute an analysis query.
+     *
+     * This is a convenience method that forwards the query to the
+     * execute method, thus allowing for an easy to use and clean API.
+     *
+     * @param QueryInterface|\Solarium\QueryType\Analysis\Query\Document|\Solarium\QueryType\Analysis\Query\Field $query
+     * @param Endpoint|null                                                                                       $endpoint You cannot set endpoints in the SolrCloud client.
+     *
+     * @return \Solarium\QueryType\Analysis\Result\Document|\Solarium\QueryType\Analysis\Result\Field
+     */
+    public function analyze(QueryInterface $query, $endpoint = null)
+    {
+        if ($endpoint != null) {
+            throw new UnsupportedOperationException("You cannot set endpoints in the SolrCloud client.");
+        }
+
+        return $this->execute($query);
+    }
+
+    /**
+     * Execute a terms query.
+     *
+     * This is a convenience method that forwards the query to the
+     * execute method, thus allowing for an easy to use and clean API.
+     *
+     * @param QueryInterface|\Solarium\QueryType\Terms\Query $query
+     * @param Endpoint|null                                  $endpoint You cannot set endpoints in the SolrCloud client.
+     *
+     * @return \Solarium\QueryType\Terms\Result
+     */
+    public function terms(QueryInterface $query, $endpoint = null)
+    {
+        if ($endpoint != null) {
+            throw new UnsupportedOperationException("You cannot set endpoints in the SolrCloud client.");
+        }
+
+        return $this->execute($query);
+    }
+
+    /**
+     * Execute a suggester query.
+     *
+     * This is a convenience method that forwards the query to the
+     * execute method, thus allowing for an easy to use and clean API.
+     *
+     * @param QueryInterface|\Solarium\QueryType\Suggester\Query $query
+     * @param Endpoint|null                                      $endpoint You cannot set endpoints in the SolrCloud client.
+     *
+     * @return \Solarium\QueryType\Suggester\Result\Result
+     */
+    public function suggester(QueryInterface $query, $endpoint = null)
+    {
+        if ($endpoint != null) {
+            throw new UnsupportedOperationException("You cannot set endpoints in the SolrCloud client.");
+        }
+
+        return $this->execute($query);
+    }
+
+    /**
+     * Execute an extract query.
+     *
+     * This is a convenience method that forwards the query to the
+     * execute method, thus allowing for an easy to use and clean API.
+     *
+     * @param QueryInterface|\Solarium\QueryType\Extract\Query $query
+     * @param Endpoint|null                                    $endpoint You cannot set endpoints in the SolrCloud client.
+     *
+     * @return \Solarium\QueryType\Extract\Result
+     */
+    public function extract(QueryInterface $query, $endpoint = null)
+    {
+        if ($endpoint != null) {
+            throw new UnsupportedOperationException("You cannot set endpoints in the SolrCloud client.");
+        }
+
+        return $this->execute($query);
+    }
+
+    /**
+     * Execute a RealtimeGet query.
+     *
+     * This is a convenience method that forwards the query to the
+     * execute method, thus allowing for an easy to use and clean API.
+     *
+     * @param QueryInterface|\Solarium\QueryType\RealtimeGet\Query $query
+     * @param Endpoint|null                                        $endpoint You cannot set endpoints in the SolrCloud client.
+     *
+     * @return \Solarium\QueryType\RealtimeGet\Result
+     */
+    public function realtimeGet(QueryInterface $query, $endpoint = null)
+    {
+        if ($endpoint != null) {
+            throw new UnsupportedOperationException("You cannot set endpoints in the SolrCloud client.");
+        }
+
+        return $this->execute($query);
     }
 
     /**
@@ -295,11 +534,16 @@ class CloudClient extends Client
                 case 'clienttimeout':
                     $this->clientTimeout = $value;
                     break;
+                case 'loadbalancingenabled':
+                    $this->loadBalancingEnabled = $value;
+                case 'failoverenabled':
+                    $this->failoverEnabled = $value;
             }
         }
 
         $this->zkStateReader = new ZkStateReader($this->zkHosts);
-        $loadBalancerOptions = array('failoverenabled' => true);
+
+        $loadBalancerOptions = array('failoverenabled' => $this->failoverEnabled);
         $this->registerPlugin('loadbalancer', new Loadbalancer($loadBalancerOptions));
     }
 

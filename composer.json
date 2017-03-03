@@ -13,7 +13,7 @@
     ],
     "require": {
         "php": ">= 7.0",
-        "solarium/solarium": ">=3.6.0",
+        "solarium/solarium": ">=3.6.0 <=3.9.0",
         "symfony/cache": "~3.1",
         "ext-zookeeper": "~0.3.1"
     },
@@ -21,6 +21,6 @@
         "phpunit/phpunit": ">=5.7"
     },
     "autoload": {
-        "psr-0": { "Solarium\\Cloud": "library/" }
+        "psr-4": { "Solarium\\": "library/" }
     }
 }
