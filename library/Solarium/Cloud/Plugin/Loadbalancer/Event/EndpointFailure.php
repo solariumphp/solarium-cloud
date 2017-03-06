@@ -2,7 +2,7 @@
 /**
  * BSD 2-Clause License
  *
- * Copyright (c) 2017 Jeroen Steggink
+ * Copyright (c) 2017 Jeroen Steggink, Bas de Nooijer
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,40 +27,52 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-namespace Solarium\Cloud\Tests\Core\Client;
+namespace Solarium\Cloud\Plugin\Loadbalancer\Event;
 
-use PHPUnit\Framework\TestCase;
-use Solarium\Cloud\Client;
+use Symfony\Component\EventDispatcher\Event;
+use Solarium\Cloud\Core\Client\CollectionEndpoint;
+use Solarium\Exception\HttpException;
 
 /**
- * Class CloudClientTest
- * @package Solarium\Cloud\Tests\Core\Client
+ * EndpointFailure event, see Events for details.
  */
-class CloudClientTest extends TestCase
+class EndpointFailure extends Event
 {
     /**
-     * @var Client
+     * @var CollectionEndpoint
      */
-    protected $client;
+    protected $endpoint;
 
     /**
-     * Setup the client
+     * @var HttpException
      */
-    public function setUp()
+    protected $exception;
+
+    /**
+     * Constructor.
+     *
+     * @param CollectionEndpoint      $endpoint
+     * @param HttpException $exception
+     */
+    public function __construct(CollectionEndpoint $endpoint, HttpException $exception)
     {
-        $options = array('zkhosts' => 'localhost:2181', 'defaultcollection' => 'collection1');
-        $this->client = new Client($options);
+        $this->endpoint = $endpoint;
+        $this->exception = $exception;
     }
 
     /**
-     * Test basic connection
+     * @return CollectionEndpoint
      */
-    public function testSolrCloud()
+    public function getEndpoint()
     {
-        $this->client->setCollection('collection1');
-        $query = $this->client->createSelect();
-        $result = $this->client->select($query);
-        print_r($result);
+        return $this->endpoint;
     }
 
+    /**
+     * @return HttpException
+     */
+    public function getException()
+    {
+        return $this->exception;
+    }
 }

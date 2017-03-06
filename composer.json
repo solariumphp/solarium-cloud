@@ -7,6 +7,10 @@
     "license": "BSD-2-Clause",
     "authors": [
         {
+            "name": "Jeroen Steggink",
+            "homepage": "https://knowsy.nl"
+        },
+        {
             "name": "See GitHub contributors",
             "homepage": "https://github.com/jsteggink/solarium-cloud/contributors"
         }

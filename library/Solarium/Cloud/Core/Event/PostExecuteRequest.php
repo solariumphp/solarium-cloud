@@ -2,7 +2,7 @@
 /**
  * BSD 2-Clause License
  *
- * Copyright (c) 2017 Jeroen Steggink
+ * Copyright (c) 2017 Jeroen Steggink, Bas de Nooijer
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,40 +27,74 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-namespace Solarium\Cloud\Tests\Core\Client;
+namespace Solarium\Cloud\Core\Event;
 
-use PHPUnit\Framework\TestCase;
-use Solarium\Cloud\Client;
+use Symfony\Component\EventDispatcher\Event;
+use Solarium\Core\Client\Request;
+use Solarium\Core\Client\Response;
+use Solarium\Cloud\Core\Client\CollectionEndpoint;
 
 /**
- * Class CloudClientTest
- * @package Solarium\Cloud\Tests\Core\Client
+ * PostExecuteRequest event, see Events for details.
  */
-class CloudClientTest extends TestCase
+class PostExecuteRequest extends Event
 {
     /**
-     * @var Client
+     * @var Request
      */
-    protected $client;
+    protected $request;
 
     /**
-     * Setup the client
+     * @var CollectionEndpoint
      */
-    public function setUp()
+    protected $endpoint;
+
+    /**
+     * @var Response
+     */
+    protected $response;
+
+    /**
+     * Event constructor.
+     *
+     * @param Request       $request
+     * @param CollectionEndpoint $endpoint
+     * @param Response      $response
+     */
+    public function __construct(Request $request, CollectionEndpoint $endpoint, Response $response)
     {
-        $options = array('zkhosts' => 'localhost:2181', 'defaultcollection' => 'collection1');
-        $this->client = new Client($options);
+        $this->request = $request;
+        $this->endpoint = $endpoint;
+        $this->response = $response;
     }
 
     /**
-     * Test basic connection
+     * Get the endpoint object for this event.
+     *
+     * @return CollectionEndpoint
      */
-    public function testSolrCloud()
+    public function getEndpoint()
     {
-        $this->client->setCollection('collection1');
-        $query = $this->client->createSelect();
-        $result = $this->client->select($query);
-        print_r($result);
+        return $this->endpoint;
     }
 
+    /**
+     * Get the response object for this event.
+     *
+     * @return Response
+     */
+    public function getResponse()
+    {
+        return $this->response;
+    }
+
+    /**
+     * Get the request object for this event.
+     *
+     * @return Request
+     */
+    public function getRequest()
+    {
+        return $this->request;
+    }
 }

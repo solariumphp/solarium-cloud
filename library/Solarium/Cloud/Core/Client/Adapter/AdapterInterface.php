@@ -2,7 +2,7 @@
 /**
  * BSD 2-Clause License
  *
- * Copyright (c) 2017 Jeroen Steggink
+ * Copyright (c) 2017 Jeroen Steggink, Bas de Nooijer
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,40 +27,37 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-namespace Solarium\Cloud\Tests\Core\Client;
+namespace Solarium\Cloud\Core\Client\Adapter;
 
-use PHPUnit\Framework\TestCase;
-use Solarium\Cloud\Client;
+use Solarium\Core\ConfigurableInterface;
+use Solarium\Core\Client\Request;
+use Solarium\Core\Client\Response;
+use Solarium\Cloud\Core\Client\CollectionEndpoint;
 
 /**
- * Class CloudClientTest
- * @package Solarium\Cloud\Tests\Core\Client
+ * Interface for client adapters.
+ *
+ * The goal of an adapter is to accept a query, execute it and return the right
+ * result object. This is actually quite a complex task as it involves the
+ * handling of all Solr communication.
+ *
+ * The adapter structure allows for varying implementations of this task.
+ *
+ * Most adapters will use some sort of HTTP client. In that case the
+ * query request builders and query response parsers can be used to simplify
+ * HTTP communication.
+ *
+ * However an adapter may also implement all logic by itself if needed.
  */
-class CloudClientTest extends TestCase
+interface AdapterInterface extends ConfigurableInterface
 {
     /**
-     * @var Client
+     * Execute a request.
+     *
+     * @param Request  $request
+     * @param CollectionEndpoint $endpoint
+     *
+     * @return Response
      */
-    protected $client;
-
-    /**
-     * Setup the client
-     */
-    public function setUp()
-    {
-        $options = array('zkhosts' => 'localhost:2181', 'defaultcollection' => 'collection1');
-        $this->client = new Client($options);
-    }
-
-    /**
-     * Test basic connection
-     */
-    public function testSolrCloud()
-    {
-        $this->client->setCollection('collection1');
-        $query = $this->client->createSelect();
-        $result = $this->client->select($query);
-        print_r($result);
-    }
-
+    public function execute($request, $endpoint);
 }

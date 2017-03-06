@@ -61,7 +61,7 @@ class Client extends CloudClient
      *
      * @var string
      */
-    const VERSION = '0.1.0';
+    const VERSION = '0.1.2';
 
     /**
      * Check for an exact version.

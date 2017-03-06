@@ -27,40 +27,19 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-namespace Solarium\Cloud\Tests\Core\Client;
-
-use PHPUnit\Framework\TestCase;
-use Solarium\Cloud\Client;
+namespace Solarium\Cloud\Plugin\Loadbalancer\Event;
 
 /**
- * Class CloudClientTest
- * @package Solarium\Cloud\Tests\Core\Client
+ * Event definitions.
  */
-class CloudClientTest extends TestCase
+class Events
 {
     /**
-     * @var Client
+     * This event is called after an endpoint has failed.
+     *
+     * Gets the endpoint and the HttpException as params
+     *
+     * @var string
      */
-    protected $client;
-
-    /**
-     * Setup the client
-     */
-    public function setUp()
-    {
-        $options = array('zkhosts' => 'localhost:2181', 'defaultcollection' => 'collection1');
-        $this->client = new Client($options);
-    }
-
-    /**
-     * Test basic connection
-     */
-    public function testSolrCloud()
-    {
-        $this->client->setCollection('collection1');
-        $query = $this->client->createSelect();
-        $result = $this->client->select($query);
-        print_r($result);
-    }
-
+    const ENDPOINT_FAILURE = 'solarium-cloud.loadbalancer.endpointFailure';
 }

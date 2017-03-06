@@ -60,8 +60,8 @@ class ZkStateReaderTest extends TestCase
         //$this->assertEquals('collection1', $configName);
     }
 
-    public function testReadCollectionStates() {
-        $collectionStates = $this->zkStateReader->getCollectionStates();
+    public function testReadCollectionState() {
+        $collectionStates = $this->zkStateReader->getCollectionState('collection1');
         print_r($collectionStates);
         //$this->assertEquals('collection1', $configName);
     }
@@ -92,7 +92,7 @@ class ZkStateReaderTest extends TestCase
     }
 
     public function testActiveCollectionBaseUrls() {
-        $activeCollectionBaseUrls = $this->zkStateReader->getActiveCollectionBaseUrls('collection1');
+        $activeCollectionBaseUrls = $this->zkStateReader->getActiveBaseUrls('collection1');
         //$this->assertEquals(, $activeCollectionEndpoints);
         print_r($activeCollectionBaseUrls);
     }
