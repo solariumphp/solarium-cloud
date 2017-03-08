@@ -30,6 +30,7 @@
 namespace Solarium\Cloud\Core\Zookeeper;
 
 use Solarium\Cloud\Core\Client\CollectionEndpoint;
+use Solarium\Cloud\Core\Zookeeper\CollectionState;
 use Solarium\Exception\InvalidArgumentException;
 use Solarium\Cloud\Exception\ZookeeperException;
 use Symfony\Component\Cache\Adapter\AdapterInterface;
@@ -50,11 +51,12 @@ class ZkStateReader
     const STATE_ACTIVE = 'active';
     const REPLICA_PROP = 'replica';
     const REPLICAS_PROP = 'replicas';
-    const SHARD_RANGE_PROP = 'shard_range';
+    const RANGE_PROP = 'range';
     const SHARD_STATE_PROP = 'shard_state';
     const SHARD_PARENT_PROP = 'shard_parent';
     const NUM_SHARDS_PROP = 'numShards';
     const LEADER_PROP = 'leader';
+    const ROUTER_PROP = "router";
     const PROPERTY_PROP = 'property';
     const PROPERTY_VALUE_PROP = 'property.value';
     const MAX_AT_ONCE_PROP = 'maxAtOnce';
@@ -98,7 +100,7 @@ class ZkStateReader
     protected $collectionStates = array();
 
     /** @var array A view of the current state of all collections; combines all the different state sources into a single view. */
-    protected $clusterStates;
+    protected $clusterState;
 
     /** @var  array All the live nodes */
     protected $liveNodes = array();
@@ -159,31 +161,12 @@ class ZkStateReader
     }
 
     /**
-     * @param string $collection
-     * @return array
-     * @throws ZookeeperException
-     */
-    public function getCollectionState(string $collection): array
-    {
-        $collection = $this->getCollectionName($collection);
-        if ($this->clusterStates != null) {
-            if (!isset($this->clusterStates[$collection])) {
-                throw new ZookeeperException("Collection '$collection' does not exist.'");
-            }
-
-            return $this->clusterStates[$collection];
-        } else {
-            return array();
-        }
-    }
-
-    /**
      * @return array
      */
-    public function getClusterStates(): array
+    public function getClusterState(): array
     {
-        if ($this->clusterStates != null) {
-            return $this->clusterStates;
+        if ($this->clusterState != null) {
+            return $this->clusterState;
         } else {
             return array();
         }
@@ -223,9 +206,9 @@ class ZkStateReader
     {
         if ($collection != null) {
             $collection = $this->getCollectionName($collection);
-            $states[$collection] = $this->getCollectionState($collection);
+            $states[$collection] = $this->readCollectionState($collection);
         } else {
-            $states = $this->clusterStates;
+            $states = $this->clusterState;
         }
 
         $replicas = array();
@@ -258,7 +241,7 @@ class ZkStateReader
     public function getCollectionShardLeadersBaseUrl(string $collection): array
     {
         $collection = $this->getCollectionName($collection);
-        $state = $this->getCollectionState($collection);
+        $state = $this->readCollectionState($collection);
 
         $leaders = array();
 
@@ -280,70 +263,50 @@ class ZkStateReader
         return $leaders;
     }
 
+    // TODO make it setEndpoints
     /**
-     * Return all active CollectionEndpoints
-     * @return CollectionEndpoint[] An array of CollectionEndpoints where the keys are the ids of the CollectionEndpoints
+     * Return all active CollectionStates
+     * @return CollectionState[] An array of CollectionStates where the keys are the ids of the CollectionStates
      */
     public function getEndpoints(): array
     {
         $endpoints = array();
 
         foreach ($this->collections as $collection) {
-            $urls = $this->getActiveBaseUrls($collection);
-            foreach ($urls as $id => $url) {
-                $options = array();
-                $options = parse_url($url);
-                $options['collection'] = $collection;
-                $options['key'] = $id;
-                $endpoints[$id] = new CollectionEndpoint($options);
-            }
+            $endpoints[$collection] = new CollectionState(array($collection => $this->readCollectionState($collection)));
         }
 
         return $endpoints;
     }
 
+    // TODO this should be part of a CollectionEndpoint
     /**
-     * Return all active collection CollectionEndpoints
+     * Return all active collection CollectionStates
      * @param string $collection Collection name
-     * @return CollectionEndpoint[] An array of CollectionEndpoints where the keys are the ids of the CollectionEndpoints
+     * @return CollectionState
      */
-    public function getCollectionEndpoints(string $collection): array
+    public function getCollectionState(string $collection): CollectionState
     {
         $collection = $this->getCollectionName($collection);
 
-        $endpoints = array();
-
-        $urls = $this->getActiveBaseUrls($collection);
-
-        foreach ($urls as $id => $url) {
-            $options = array();
-            $options = parse_url($url);
-            $options['collection'] = $collection;
-            $options['key'] = $id;
-            $endpoints[$id] = new CollectionEndpoint($options);
-        }
-
-        return $endpoints;
+        return new CollectionState(array($collection => $this->readCollectionState($collection)));
     }
 
     /**
-     * Return the collection shard leaders CollectionEndpoints
-     * @param string $collection Collection
-     * @return CollectionEndpoint[] An array of CollectionEndpoints where the keys are the ids of the CollectionEndpoints
+     * @param string $collection
+     * @return CollectionEndpoint
+     * @throws ZookeeperException
      */
-    public function getCollectionShardLeadersEndpoints(string $collection): array
+    public function getCollectionEndpoint(string $collection): CollectionEndpoint
     {
         $collection = $this->getCollectionName($collection);
-        $endpoints = array();
-        $urls = $this->getCollectionShardLeadersBaseUrl($collection);
-        foreach ($urls as $id => $url) {
-            $options = parse_url($url);
-            $options['collection'] = $collection;
-            $options['key'] = $id;
-            $endpoints[$id] = new CollectionEndpoint($options);
+        $state = $this->getCollectionState($collection);
+        if (reset($state) === null || empty(reset($state))) {
+            throw new ZookeeperException("Collection '$collection' does not exist.'");
         }
+        $endpoint = new CollectionEndpoint($state);
 
-        return $endpoints;
+        return $endpoint;
     }
 
     /**
@@ -401,13 +364,32 @@ class ZkStateReader
     }
 
     /**
+     * @param string $collection
+     * @return array
+     * @throws ZookeeperException
+     */
+    protected function readCollectionState(string $collection): array
+    {
+        $collection = $this->getCollectionName($collection);
+        if ($this->clusterState != null) {
+            if (!isset($this->clusterState[$collection])) {
+                throw new ZookeeperException("Collection '$collection' does not exist.'");
+            }
+
+            return $this->clusterState[$collection];
+        } else {
+            return array();
+        }
+    }
+
+    /**
      * Reads data from Zookeeper
      */
     protected function readZookeeper()
     {
         $this->readAliases();
         $this->readCollectionList();
-        $this->readClusterStates();
+        $this->readClusterState();
         $this->readSecurityData();
         $this->readLiveNodes();
     }
@@ -431,7 +413,7 @@ class ZkStateReader
     /**
      * Read cluster state and write to class property
      */
-    protected function readClusterStates()
+    protected function readClusterState()
     {
         //Compatibility for older versions of Solr
         $this->readData(self::CLUSTER_STATE, $this->legacyCollectionStates, true, true);
@@ -445,7 +427,7 @@ class ZkStateReader
             }
         }
 
-        $this->clusterStates = array_merge($this->collectionStates, $this->legacyCollectionStates);
+        $this->clusterState = array_merge($this->collectionStates, $this->legacyCollectionStates);
     }
 
     /**

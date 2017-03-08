@@ -39,6 +39,7 @@ use Symfony\Component\Cache\Adapter\FilesystemAdapter;
  */
 class ZkStateReaderTest extends TestCase
 {
+    /** @var  ZkStateReader */
     protected $zkStateReader;
     protected $cache;
 
@@ -66,9 +67,9 @@ class ZkStateReaderTest extends TestCase
         //$this->assertEquals('collection1', $configName);
     }
 
-    public function testReadClusterStates() {
-        $clusterStates = $this->zkStateReader->getClusterStates();
-        print_r($clusterStates);
+    public function testReadClusterState() {
+        $clusterState = $this->zkStateReader->getClusterState();
+        print_r($clusterState);
         //$this->assertEquals('collection1', $configName);
     }
 
@@ -97,21 +98,11 @@ class ZkStateReaderTest extends TestCase
         print_r($activeCollectionBaseUrls);
     }
 
-    public function testCollectionShardLeadersBaseUrl() {
-        $collectionShardLeadersBaseUrl = $this->zkStateReader->getCollectionShardLeadersBaseUrl('collection1');
-        //$this->assertEquals(, $activeCollectionEndpoints);
-        print_r($collectionShardLeadersBaseUrl);
-    }
-
-    public function testCollectionEndpoints() {
-        $endpoints = $this->zkStateReader->getCollectionEndpoints('collection1');
+    public function testCollectionEndpoint() {
+        $endpoints = $this->zkStateReader->getCollectionEndpoint('collection1');
         print_r($endpoints);
     }
 
-    public function testCollectionLeadersEndpoints() {
-        $endpoints = $this->zkStateReader->getCollectionShardLeadersEndpoints('collection1');
-        print_r($endpoints);
-    }
 
     protected function tearDown()
     {

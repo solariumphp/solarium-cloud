@@ -29,226 +29,49 @@
 
 namespace Solarium\Cloud\Core\Client;
 
+use Solarium\Cloud\Core\Zookeeper\CollectionState;
+use Solarium\Cloud\Core\Zookeeper\ShardState;
+use Solarium\Cloud\Core\Zookeeper\ZkStateReader;
+use Solarium\Core\Client\Endpoint;
 use Solarium\Core\Configurable;
 
 
-// TODO is not complete, add methods to get information from state and update state
+// TODO Add a way to set select or update type, this will choose shard leaders or any of the nodes
+// TODO Load balancing in the Endpoint?
 /**
- * Class for describing a SolrCloud endpoint.
+ * Class for describing a SolrCloud collection endpoint.
  * @package Solarium\Cloud\Core\Client
  */
 class CollectionEndpoint extends Configurable
 {
     /** @var  string Name of the collection */
-    protected $collection;
-    /** @var  array Collection state retrieved from ZkStateReader */
+    protected $name;
+    /** @var  CollectionState Collection state retrieved from ZkStateReader */
     protected $state;
 
-    /**
-     * Default options.
-     *
-     * The defaults match a standard SolrCloud example instance as distributed by
-     * the Apache Lucene Solr project.
-     *
-     * @var array
-     */
-    protected $options = array(
-        'scheme'  => 'http',
-        'host'    => '127.0.0.1',
-        'port'    => 8983,
-        'path'    => '/solr',
-        'collection'    => null,
-        'timeout' => 5,
-    );
+    /** @var  string[]  */
+    protected $leaderBaseUrls;
+    /** @var  string[]  */
+    protected $nodesBaseUrls;
+
+    /** @var  string */
+    protected $scheme;
+    /** @var  string */
+    protected $host;
+    /** @var  int */
+    protected $port;
+    /** @var  string */
+    protected $path;
 
     /**
      * CollectionEndpoint constructor.
-     * @param string             $collection
+     * @param array              $state   The collection state returned by ZkStateReader
      * @param array|\Zend_Config $options
      */
-    public function __construct(string $collection, array $options = null)
+    public function __construct(CollectionState $state, array $options = null)
     {
-        $this->collection = $collection;
+        $this->state = $state;
         parent::__construct($options);
-    }
-
-    /**
-     * Get key value.
-     *
-     * @return string
-     */
-    public function getKey()
-    {
-        return $this->getOption('key');
-    }
-
-    /**
-     * Set key value.
-     *
-     * @param string $value
-     *
-     * @return self Provides fluent interface
-     */
-    public function setKey($value)
-    {
-        return $this->setOption('key', $value);
-    }
-
-    /**
-     * Set host option.
-     *
-     * @param string $host This can be a hostname or an IP address
-     *
-     * @return self Provides fluent interface
-     */
-    public function setHost($host)
-    {
-        return $this->setOption('host', $host);
-    }
-
-    /**
-     * Get host option.
-     *
-     * @return string
-     */
-    public function getHost()
-    {
-        return $this->getOption('host');
-    }
-
-    /**
-     * Set port option.
-     *
-     * @param int $port Common values are 80, 8080 and 8983
-     *
-     * @return self Provides fluent interface
-     */
-    public function setPort($port)
-    {
-        return $this->setOption('port', $port);
-    }
-
-    /**
-     * Get port option.
-     *
-     * @return int
-     */
-    public function getPort()
-    {
-        return $this->getOption('port');
-    }
-
-    /**
-     * Set path option.
-     *
-     * If the path has a trailing slash it will be removed.
-     *
-     * @param string $path
-     *
-     * @return self Provides fluent interface
-     */
-    public function setPath($path)
-    {
-        if (substr($path, -1) == '/') {
-            $path = substr($path, 0, -1);
-        }
-
-        return $this->setOption('path', $path);
-    }
-
-    /**
-     * Get path option.
-     *
-     * @return string
-     */
-    public function getPath()
-    {
-        return $this->getOption('path');
-    }
-
-    /**
-     * Set collection option.
-     *
-     * @param string $collection
-     *
-     * @return self Provides fluent interface
-     */
-    public function setCollection($collection)
-    {
-        return $this->setOption('collection', $collection);
-    }
-
-    /**
-     * Get collection option.
-     *
-     * @return string
-     */
-    public function getCollection()
-    {
-        return $this->getOption('collection');
-    }
-
-    /**
-     * Set timeout option.
-     *
-     * @param int $timeout
-     *
-     * @return self Provides fluent interface
-     */
-    public function setTimeout($timeout)
-    {
-        return $this->setOption('timeout', $timeout);
-    }
-
-    /**
-     * Get timeout option.
-     *
-     * @return string
-     */
-    public function getTimeout()
-    {
-        return $this->getOption('timeout');
-    }
-
-    /**
-     * Set scheme option.
-     *
-     * @param string $scheme
-     *
-     * @return self Provides fluent interface
-     */
-    public function setScheme($scheme)
-    {
-        return $this->setOption('scheme', $scheme);
-    }
-
-    /**
-     * Get scheme option.
-     *
-     * @return string
-     */
-    public function getScheme()
-    {
-        return $this->getOption('scheme');
-    }
-
-    /**
-     * Get the base url for all requests.
-     *
-     * Based on host, path, port and core options.
-     *
-     * @return string
-     */
-    public function getBaseUri()
-    {
-        $uri = $this->getScheme().'://'.$this->getHost().':'.$this->getPort().$this->getPath().'/';
-
-        $collection = $this->getCollection();
-        if (!empty($collection)) {
-            $uri .= $collection.'/';
-        }
-
-        return $uri;
     }
 
     /**
@@ -283,6 +106,102 @@ class CollectionEndpoint extends Configurable
     }
 
     /**
+     * Name of the collection.
+     *
+     * @return string
+     */
+    public function getCollection()
+    {
+        return $this->name;
+    }
+
+    /**
+     * Get host option.
+     *
+     * @return string
+     */
+    public function getHost()
+    {
+        return $this->host;
+    }
+
+    /**
+     * Name of the collection.
+     *
+     * @return string
+     */
+    public function getName(): string
+    {
+        return $this->name;
+    }
+
+    /**
+     * Get path option.
+     *
+     * @return string
+     */
+    public function getPath()
+    {
+        return $this->path;
+    }
+
+    /**
+     * Get port option.
+     *
+     * @return int
+     */
+    public function getPort()
+    {
+        return $this->port;
+    }
+
+    /**
+     * Get scheme option.
+     *
+     * @return string
+     */
+    public function getScheme()
+    {
+        return $this->scheme;
+    }
+
+    /**
+     * Get the base url for all requests.
+     *
+     * Based on host, path, port and core options.
+     *
+     * @return string
+     */
+    public function getBaseUri()
+    {
+        $uri = $this->getScheme().'://'.$this->getHost().':'.$this->getPort().$this->getPath().'/'.$this->getCollection().'/';
+
+        return $uri;
+    }
+
+    /**
+     * Get timeout option.
+     *
+     * @return string
+     */
+    public function getTimeout()
+    {
+        return $this->getOption('timeout');
+    }
+
+    /**
+     * Set timeout option.
+     *
+     * @param int $timeout
+     *
+     * @return self Provides fluent interface
+     */
+    public function setTimeout($timeout)
+    {
+        return $this->setOption('timeout', $timeout);
+    }
+
+    /**
      * Magic method enables a object to be transformed to a string.
      *
      * Get a summary showing significant variables in the object
@@ -292,9 +211,31 @@ class CollectionEndpoint extends Configurable
      */
     public function __toString()
     {
-        $output = __CLASS__.'::__toString'."\n".'base uri: '.$this->getBaseUri()."\n".'host: '.$this->getHost()."\n".'port: '.$this->getPort()."\n".'path: '.$this->getPath()."\n".'collection: '.$this->getCollection()."\n".'timeout: '.$this->getTimeout()."\n".'authentication: '.print_r($this->getAuthentication(), 1);
+        $output = __CLASS__.'::__toString'."\n".'base uri: '.$this->getBaseUri()."\n".'host: '.$this->getHost()."\n".'port: '.$this->getPort()."\n".'path: '.$this->getPath()."\n".'collection: '.$this->getCore()."\n".'timeout: '.$this->getTimeout()."\n".'authentication: '.print_r($this->getAuthentication(), 1);
 
         return $output;
+    }
+
+    /**
+     * @return CollectionState
+     */
+    protected function getCollectionState(): CollectionState
+    {
+        return $this->state;
+    }
+
+    /**
+     *
+     */
+    protected function setRandomNodeBaseUrl()
+    {
+        shuffle($this->nodesBaseUrls);
+        $randomUrl = reset($this->nodesBaseUrls);
+        $parseUrl = parse_url($randomUrl);
+        $this->scheme = $parseUrl['scheme'];
+        $this->host = $parseUrl['host'];
+        $this->port = $parseUrl['port'];
+        $this->path = $parseUrl['path'];
     }
 
     /**
@@ -306,14 +247,10 @@ class CollectionEndpoint extends Configurable
      */
     protected function init()
     {
-        //TODO check if minimum fields are set
-
-        foreach ($this->options as $name => $value) {
-            switch ($name) {
-                case 'path':
-                    $this->setPath($value);
-                    break;
-            }
-        }
+        $this->getCollectionState();
+        $this->name = $this->state->getName();
+        $this->leaderBaseUrls = $this->state->getShardLeadersBaseUrls();
+        $this->nodesBaseUrls = $this->state->getNodesBaseUrls();
+        $this->setRandomNodeBaseUrl();
     }
 }

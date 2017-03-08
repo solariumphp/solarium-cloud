@@ -32,6 +32,7 @@ namespace Solarium\Cloud\Core\Client;
 use Solarium\Cloud\Core\Zookeeper\ZkStateReader;
 use Solarium\Cloud\Core\Client\CollectionEndpoint;
 use Solarium\Cloud\Exception\UnsupportedOperationException;
+use Solarium\Cloud\Exception\ZookeeperException;
 use Solarium\Cloud\Plugin\Loadbalancer\Loadbalancer;
 
 use Solarium\Core\Configurable;
@@ -262,24 +263,17 @@ class CloudClient extends Configurable implements CloudClientInterface
     public function executeRequest($request)
     {
         if (empty($this->collection)) {
-            throw new UnsupportedOperationException("No collection is specified.");
+            throw new UnexpectedValueException("No collection is specified.");
         }
 
         $loadbalancer = $this->getPlugin('loadbalancer');
 
         // Set endpoints for collection
-        $this->endpoints = $this->zkStateReader->getCollectionEndpoints($this->collection);
-        $endpoints = array_keys($this->zkStateReader->getCollectionEndpoints($this->collection));
-        foreach ($endpoints as $endpointId) {
-            $endpointsLoadbalancer[$endpointId] = 1; // set weight to 1
-        }
-        //TODO add check if exists.
-        $loadbalancer->setEndpoints($endpointsLoadbalancer);
+        $this->endpoint = $this->zkStateReader->getCollectionEndpoint($this->collection);
 
-        // Get first shard leader we can find as a default CollectionEndpoint
-        $leaders = $this->zkStateReader->getCollectionShardLeadersEndpoints($this->collection);
-        $endpoint = reset($leaders);
-        $this->setDefaultEndpoint(key($endpoint));
+        //TODO What Solr server to connect to should be coming from a CollectionEndpoint
+
+        $endpoint = $this->zkStateReader->getCollectionEndpoint($this->collection);
 
         $event = new PreExecuteRequestEvent($request, $endpoint);
         $this->eventDispatcher->dispatch(Events::PRE_EXECUTE_REQUEST, $event);
@@ -412,26 +406,6 @@ class CloudClient extends Configurable implements CloudClientInterface
     public function getEndpoints(string $collection = null)
     {
         // TODO: Implement getEndpoints() method.
-    }
-
-    /**
-     * Get default endpoint
-     *
-     * @return CollectionEndpoint
-     */
-    public function getDefaultEndpoint()
-    {
-        return $this->endpoints[$this->defaultEndpointKey];
-    }
-
-    /**
-     * Set the default endpoint key
-     *
-     * @param string $endpointKey
-     */
-    public function setDefaultEndpoint(string $endpointKey)
-    {
-        $this->defaultEndpointKey = $endpointKey;
     }
 
     /**
@@ -1189,7 +1163,7 @@ class CloudClient extends Configurable implements CloudClientInterface
 
         $this->endpoints = $this->zkStateReader->getEndpoints();
         if (!empty($this->defaultCollection)) {
-            $this->defaultCollectionEndpoints = $this->zkStateReader->getCollectionEndpoints($this->defaultCollection);
+            $this->defaultCollectionEndpoints = $this->zkStateReader->getCollectionEndpoint($this->defaultCollection);
         }
 
         $loadBalancerOptions = array('failoverenabled' => $this->failoverEnabled);

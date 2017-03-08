@@ -29,10 +29,159 @@
 
 namespace Solarium\Cloud\Core\Zookeeper;
 
-class CollectionState {
+// TODO is not complete, add methods to get information from state and update state
+/**
+ * Class for describing a SolrCloud collection endpoint.
+ * @package Solarium\Cloud\Core\Client
+ */
+class CollectionState extends AbstractState
+{
+    /** @var  string Name of the collection */
+    protected $name;
+    /** @var  ShardState[] */
+    protected $shards;
+    /** @var  array Array of aliases for collection */
+    protected $aliases;
 
-    /** @var  array */
-    protected $state;
+    /**
+     * Name of the collection
+     *
+     * @return string
+     */
+    public function getName(): string
+    {
+        return $this->name;
+    }
 
-    
+    /**
+     * Magic method enables a object to be transformed to a string.
+     *
+     * Get a summary showing significant variables in the object
+     *
+     * @return string
+     */
+    public function __toString(): string
+    {
+        $output = __CLASS__.'::__toString'."\n".print_r($this->state, true);
+
+        return $output;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isAutoAddReplicas(): bool
+    {
+        return $this->getState()[ZkStateReader::AUTO_ADD_REPLICAS];
+    }
+
+    /**
+     *
+     * @return int
+     */
+    public function getMaxShardsPerNode(): int
+    {
+        return $this->getState()[ZkStateReader::MAX_SHARDS_PER_NODE];
+    }
+
+    /**
+     *
+     * @return int
+     */
+    public function getReplicationFactor(): int
+    {
+        return $this->getState()[ZkStateReader::REPLICATION_FACTOR];
+    }
+
+    /**
+     *
+     * @return string
+     */
+    public function getRouterName(): string
+    {
+        return $this->getState()[ZkStateReader::ROUTER_PROP]['name'];
+    }
+
+    /**
+     * Return all shards
+     *
+     * @return ShardState[]
+     */
+    public function getShards(): array
+    {
+        return $this->shards;
+    }
+
+    /**
+     *
+     * @return ReplicaState[]
+     */
+    public function getShardLeaders(): array
+    {
+        $leaders = array();
+        foreach ($this->shards as $shardName => $shard) {
+            $leaders[$shardName] = $shard->getShardLeader();
+        }
+
+        return $leaders;
+    }
+
+    /**
+     * Array with shard names as keys and base urls as values.
+     * @return string[]
+     */
+    public function getShardLeadersBaseUrls(): array
+    {
+        $urls = array();
+
+        foreach ($this->getShards() as $shardName => $shard) {
+            $urls[$shardName] = $shard->getShardLeaderBaseUrl();
+        }
+
+        return $urls;
+    }
+
+    /**
+     * Array with node names as keys and base urls as values.
+     *
+     * @return string[]
+     */
+    public function getNodesBaseUrls(): array
+    {
+        $urls = array();
+
+        foreach ($this->getShards() as $shard) {
+            $urls = array_merge($shard->getNodesBaseUrls(), $urls);
+        }
+
+        return $urls;
+    }
+
+    /**
+     * Get state array without the collection name key
+     *
+     * @return array
+     */
+    protected function getState(): array
+    {
+        return $this->state[$this->name];
+    }
+
+    /**
+     *
+     */
+    protected function setShards()
+    {
+        // Clear shards first
+        $this->shards = array();
+        foreach ($this->getState()[ZkStateReader::SHARDS_PROP] as $shardName => $shardState) {
+            $this->shards[$shardName] = new ShardState(array($shardName => $shardState));
+        }
+    }
+
+    protected function init()
+    {
+        $this->name = key($this->state);
+        $this->setShards();
+    }
 }
