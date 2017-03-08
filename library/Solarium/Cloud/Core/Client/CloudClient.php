@@ -30,13 +30,12 @@
 namespace Solarium\Cloud\Core\Client;
 
 use Solarium\Cloud\Core\Zookeeper\ZkStateReader;
-use Solarium\Cloud\Core\Client\CollectionEndpoint;
-use Solarium\Cloud\Exception\UnsupportedOperationException;
-use Solarium\Cloud\Exception\ZookeeperException;
 use Solarium\Cloud\Plugin\Loadbalancer\Loadbalancer;
-
+use Solarium\Core\Client\Request;
+use Solarium\Core\Client\Response;
 use Solarium\Core\Configurable;
 use Solarium\Core\Plugin\PluginInterface;
+use Solarium\Core\Query\AbstractQuery;
 use Solarium\Core\Query\QueryInterface;
 use Solarium\Core\Query\Result\ResultInterface;
 use Solarium\Cloud\Core\Client\Adapter\AdapterInterface;
@@ -187,20 +186,6 @@ class CloudClient extends Configurable implements CloudClientInterface
     protected $endpoints = array();
 
     /**
-     * Default collection endpoints.
-     *
-     * @var CollectionEndpoint[]
-     */
-    protected $defaultCollectionEndpoints = array();
-
-    /**
-     * Default collection endpoint key.
-     *
-     * @var string
-     */
-    protected $defaultEndpointKey;
-
-    /**
      * Adapter instance.
      *
      * If an adapter instance is set using {@link setAdapter()} this var will
@@ -219,23 +204,23 @@ class CloudClient extends Configurable implements CloudClientInterface
 
     /* @var string Current collection*/
     protected $collection;
+
     /* @var string Default collection to fallback to if no specific collection is given */
-
     protected $defaultCollection;
+
     /* @var ZkStateReader */
-
     protected $zkStateReader;
+
     /* @var string[] */
-
     protected $zkHosts;
+
     /* @var int */
-
     protected $zkTimeout = 10000;
-    /* @var bool */
 
+    /* @var bool */
     protected $directUpdatesToLeadersOnly;
-    /* @var bool */
 
+    /* @var bool */
     protected $failoverEnabled = true;
 
     /* @var bool */
@@ -260,7 +245,7 @@ class CloudClient extends Configurable implements CloudClientInterface
      *
      * @return Response
      */
-    public function executeRequest($request)
+    public function executeRequest(\Solarium\Core\Client\Request $request): \Solarium\Core\Client\Response
     {
         if (empty($this->collection)) {
             throw new UnexpectedValueException("No collection is specified.");
@@ -294,7 +279,7 @@ class CloudClient extends Configurable implements CloudClientInterface
     /**
      * @return mixed
      */
-    public function getDefaultCollection()
+    public function getDefaultCollection(): string
     {
         return $this->defaultCollection;
     }
@@ -398,12 +383,23 @@ class CloudClient extends Configurable implements CloudClientInterface
     }
 
     /**
-     * Get all endpoints of for specific collection
+     * Get the CollectionEndpoint for a specific collection.
+     *
+     * @param  string|null $collection Collection name
+     * @return CollectionEndpoint
+     */
+    public function getEndpoint(string $collection = null): CollectionEndpoint
+    {
+        // TODO: Implement getEndpoints() method.
+    }
+
+    /**
+     * Get all CollectionEndpoints.
      *
      * @param  string|null $collection Collection name
      * @return CollectionEndpoint[]
      */
-    public function getEndpoints(string $collection = null)
+    public function getEndpoints(): array
     {
         // TODO: Implement getEndpoints() method.
     }
@@ -438,7 +434,7 @@ class CloudClient extends Configurable implements CloudClientInterface
      * @param  string|Adapter\AdapterInterface $adapter
      * @return ClientInterface                 Provides fluent interface
      */
-    public function setAdapter($adapter)
+    public function setAdapter($adapter): CloudClientInterface
     {
         if (is_string($adapter)) {
             $this->adapter = null;
@@ -465,7 +461,7 @@ class CloudClient extends Configurable implements CloudClientInterface
      * @param  boolean $autoload
      * @return AdapterInterface
      */
-    public function getAdapter($autoload = true)
+    public function getAdapter($autoload = true): AdapterInterface
     {
         if (null === $this->adapter && $autoload) {
             $this->createAdapter();
@@ -545,7 +541,7 @@ class CloudClient extends Configurable implements CloudClientInterface
      *
      * @return array
      */
-    public function getQueryTypes()
+    public function getQueryTypes(): array
     {
         return $this->queryTypes;
     }
@@ -555,7 +551,7 @@ class CloudClient extends Configurable implements CloudClientInterface
      *
      * @return EventDispatcherInterface
      */
-    public function getEventDispatcher()
+    public function getEventDispatcher(): EventDispatcherInterface
     {
         return $this->eventDispatcher;
     }
@@ -633,7 +629,7 @@ class CloudClient extends Configurable implements CloudClientInterface
      *
      * @return PluginInterface[]
      */
-    public function getPlugins()
+    public function getPlugins(): array
     {
         return $this->pluginInstances;
     }
@@ -696,7 +692,7 @@ class CloudClient extends Configurable implements CloudClientInterface
      * @param  QueryInterface $query
      * @return Request
      */
-    public function createRequest(QueryInterface $query)
+    public function createRequest(QueryInterface $query): Request
     {
         $event = new PreCreateRequestEvent($query);
         $this->eventDispatcher->dispatch(Events::PRE_CREATE_REQUEST, $event);
@@ -727,7 +723,7 @@ class CloudClient extends Configurable implements CloudClientInterface
      * @param  array Response            $response
      * @return ResultInterface
      */
-    public function createResult(QueryInterface $query, $response)
+    public function createResult(QueryInterface $query, \Solarium\Core\Client\Response $response): ResultInterface
     {
         $event = new PreCreateResultEvent($query, $response);
         $this->eventDispatcher->dispatch(Events::PRE_CREATE_RESULT, $event);
@@ -751,12 +747,12 @@ class CloudClient extends Configurable implements CloudClientInterface
     }
 
     /**
-     * Execute a query.
+     * Execute a query
      *
-     * @param QueryInterface $query
+     * @param  QueryInterface $query
      * @return ResultInterface
      */
-    public function execute(QueryInterface $query)
+    public function execute(QueryInterface $query): ResultInterface
     {
         $event = new PreExecuteEvent($query);
         $this->eventDispatcher->dispatch(Events::PRE_EXECUTE, $event);
@@ -795,7 +791,7 @@ class CloudClient extends Configurable implements CloudClientInterface
      *
      * @return \Solarium\QueryType\Ping\Result
      */
-    public function ping(QueryInterface $query)
+    public function ping(QueryInterface $query): \Solarium\QueryType\Ping\Result
     {
         return $this->execute($query);
     }
@@ -821,7 +817,7 @@ class CloudClient extends Configurable implements CloudClientInterface
      *
      * @return \Solarium\QueryType\Update\Result
      */
-    public function update(QueryInterface $query)
+    public function update(QueryInterface $query): \Solarium\QueryType\Update\Result
     {
         return $this->execute($query);
     }
@@ -846,7 +842,7 @@ class CloudClient extends Configurable implements CloudClientInterface
      *
      * @return \Solarium\QueryType\Select\Result\Result
      */
-    public function select(QueryInterface $query)
+    public function select(QueryInterface $query): \Solarium\QueryType\Select\Result\Result
     {
         return $this->execute($query);
     }
@@ -871,7 +867,7 @@ class CloudClient extends Configurable implements CloudClientInterface
      *
      * @return \Solarium\QueryType\MoreLikeThis\Result
      */
-    public function moreLikeThis(QueryInterface $query)
+    public function moreLikeThis(QueryInterface $query): \Solarium\QueryType\MoreLikeThis\Result
     {
         return $this->execute($query);
     }
@@ -901,7 +897,7 @@ class CloudClient extends Configurable implements CloudClientInterface
      *
      * @return \Solarium\QueryType\Terms\Result
      */
-    public function terms(QueryInterface $query)
+    public function terms(QueryInterface $query): \Solarium\QueryType\Terms\Result
     {
         return $this->execute($query);
     }
@@ -916,7 +912,7 @@ class CloudClient extends Configurable implements CloudClientInterface
      *
      * @return \Solarium\QueryType\Suggester\Result\Result
      */
-    public function suggester(QueryInterface $query)
+    public function suggester(QueryInterface $query): \Solarium\QueryType\Suggester\Result\Result
     {
         return $this->execute($query);
     }
@@ -931,7 +927,7 @@ class CloudClient extends Configurable implements CloudClientInterface
      *
      * @return \Solarium\QueryType\Extract\Result
      */
-    public function extract(QueryInterface $query)
+    public function extract(QueryInterface $query): \Solarium\QueryType\Extract\Result
     {
         return $this->execute($query);
     }
@@ -946,22 +942,20 @@ class CloudClient extends Configurable implements CloudClientInterface
      *
      * @return \Solarium\QueryType\RealtimeGet\Result
      */
-    public function realtimeGet(QueryInterface $query)
+    public function realtimeGet(QueryInterface $query): \Solarium\QueryType\RealtimeGet\Result
     {
         return $this->execute($query);
     }
 
     /**
-     * Create a query instance.
+     * Create a query instance
      *
      * @throws InvalidArgumentException|UnexpectedValueException
-     *
-     * @param string $type
-     * @param array  $options
-     *
-     * @return \Solarium\Core\Query\AbstractQuery
+     * @param  string $type
+     * @param  array  $options
+     * @return AbstractQuery
      */
-    public function createQuery($type, $options = null)
+    public function createQuery($type, $options = null): AbstractQuery
     {
         $type = strtolower($type);
 
@@ -997,7 +991,7 @@ class CloudClient extends Configurable implements CloudClientInterface
      *
      * @return \Solarium\QueryType\Select\Query\Query
      */
-    public function createSelect($options = null)
+    public function createSelect($options = null): \Solarium\QueryType\Select\Query\Query
     {
         return $this->createQuery(self::QUERY_SELECT, $options);
     }
@@ -1009,7 +1003,7 @@ class CloudClient extends Configurable implements CloudClientInterface
      *
      * @return \Solarium\QueryType\MorelikeThis\Query
      */
-    public function createMoreLikeThis($options = null)
+    public function createMoreLikeThis($options = null): \Solarium\QueryType\MorelikeThis\Query
     {
         return $this->createQuery(self::QUERY_MORELIKETHIS, $options);
     }
@@ -1021,7 +1015,7 @@ class CloudClient extends Configurable implements CloudClientInterface
      *
      * @return \Solarium\QueryType\Update\Query\Query
      */
-    public function createUpdate($options = null)
+    public function createUpdate($options = null): \Solarium\QueryType\Update\Query\Query
     {
         return $this->createQuery(self::QUERY_UPDATE, $options);
     }
@@ -1033,7 +1027,7 @@ class CloudClient extends Configurable implements CloudClientInterface
      *
      * @return \Solarium\QueryType\Ping\Query
      */
-    public function createPing($options = null)
+    public function createPing($options = null): \Solarium\QueryType\Ping\Query
     {
         return $this->createQuery(self::QUERY_PING, $options);
     }
@@ -1045,7 +1039,7 @@ class CloudClient extends Configurable implements CloudClientInterface
      *
      * @return \Solarium\QueryType\Analysis\Query\Field
      */
-    public function createAnalysisField($options = null)
+    public function createAnalysisField($options = null): \Solarium\QueryType\Analysis\Query\Field
     {
         return $this->createQuery(self::QUERY_ANALYSIS_FIELD, $options);
     }
@@ -1057,7 +1051,7 @@ class CloudClient extends Configurable implements CloudClientInterface
      *
      * @return \Solarium\QueryType\Analysis\Query\Document
      */
-    public function createAnalysisDocument($options = null)
+    public function createAnalysisDocument($options = null): \Solarium\QueryType\Analysis\Query\Document
     {
         return $this->createQuery(self::QUERY_ANALYSIS_DOCUMENT, $options);
     }
@@ -1069,7 +1063,7 @@ class CloudClient extends Configurable implements CloudClientInterface
      *
      * @return \Solarium\QueryType\Terms\Query
      */
-    public function createTerms($options = null)
+    public function createTerms($options = null): \Solarium\QueryType\Terms\Query
     {
         return $this->createQuery(self::QUERY_TERMS, $options);
     }
@@ -1081,7 +1075,7 @@ class CloudClient extends Configurable implements CloudClientInterface
      *
      * @return \Solarium\QueryType\Suggester\Query
      */
-    public function createSuggester($options = null)
+    public function createSuggester($options = null): \Solarium\QueryType\Suggester\Query
     {
         return $this->createQuery(self::QUERY_SUGGESTER, $options);
     }
@@ -1093,7 +1087,7 @@ class CloudClient extends Configurable implements CloudClientInterface
      *
      * @return \Solarium\QueryType\Extract\Query
      */
-    public function createExtract($options = null)
+    public function createExtract($options = null): \Solarium\QueryType\Extract\Query
     {
         return $this->createQuery(self::QUERY_EXTRACT, $options);
     }
@@ -1105,7 +1099,7 @@ class CloudClient extends Configurable implements CloudClientInterface
      *
      * @return \Solarium\QueryType\RealtimeGet\Query
      */
-    public function createRealtimeGet($options = null)
+    public function createRealtimeGet($options = null): \Solarium\QueryType\RealtimeGet\Query
     {
         return $this->createQuery(self::QUERY_REALTIME_GET, $options);
     }

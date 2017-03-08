@@ -30,9 +30,6 @@
 namespace Solarium\Cloud\Core\Client;
 
 use Solarium\Cloud\Core\Zookeeper\CollectionState;
-use Solarium\Cloud\Core\Zookeeper\ShardState;
-use Solarium\Cloud\Core\Zookeeper\ZkStateReader;
-use Solarium\Core\Client\Endpoint;
 use Solarium\Core\Configurable;
 
 
