@@ -25,6 +25,6 @@
         "phpunit/phpunit": ">=5.7"
     },
     "autoload": {
-        "psr-4": { "Solarium\\": "library/" }
+        "psr-4": { "Solarium\\": "src/Solarium/" }
     }
 }
