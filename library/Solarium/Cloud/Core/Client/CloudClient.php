@@ -30,7 +30,6 @@
 namespace Solarium\Cloud\Core\Client;
 
 use Solarium\Cloud\Core\Zookeeper\ZkStateReader;
-use Solarium\Cloud\Plugin\Loadbalancer\Loadbalancer;
 use Solarium\Core\Client\Request;
 use Solarium\Core\Client\Response;
 use Solarium\Core\Configurable;
@@ -155,12 +154,11 @@ class CloudClient extends Configurable implements CloudClientInterface
      * @var array
      */
     protected $pluginTypes = array(
-        'loadbalancer' => 'Solarium\Cloud\Plugin\Loadbalancer\Loadbalancer',
         'postbigrequest' => 'Solarium\Plugin\PostBigRequest',
         'customizerequest' => 'Solarium\Plugin\CustomizeRequest\CustomizeRequest',
-        //'parallelexecution' => 'Solarium\Plugin\ParallelExecution\ParallelExecution',
-        //'bufferedadd' => 'Solarium\Plugin\BufferedAdd\BufferedAdd',
-        //'prefetchiterator' => 'Solarium\Plugin\PrefetchIterator',
+        // TODO //'parallelexecution' => 'Solarium\Plugin\ParallelExecution\ParallelExecution',
+        // TODO //'bufferedadd' => 'Solarium\Plugin\BufferedAdd\BufferedAdd',
+        // TODO //'prefetchiterator' => 'Solarium\Plugin\PrefetchIterator',
         'minimumscorefilter' => 'Solarium\Plugin\MinimumScoreFilter\MinimumScoreFilter',
     );
 
@@ -177,13 +175,6 @@ class CloudClient extends Configurable implements CloudClientInterface
      * @var PluginInterface[]
      */
     protected $pluginInstances = array();
-
-    /**
-     * Registered endpoints.
-     *
-     * @var CollectionEndpoint[]
-     */
-    protected $endpoints = array();
 
     /**
      * Adapter instance.
@@ -220,13 +211,6 @@ class CloudClient extends Configurable implements CloudClientInterface
     /* @var bool */
     protected $directUpdatesToLeadersOnly;
 
-    /* @var bool */
-    protected $failoverEnabled = true;
-
-    /* @var bool */
-    protected $loadBalancingEnabled = true;
-
-
     /**
      * CloudClient constructor.
      * @param null $options
@@ -250,13 +234,6 @@ class CloudClient extends Configurable implements CloudClientInterface
         if (empty($this->collection)) {
             throw new UnexpectedValueException("No collection is specified.");
         }
-
-        $loadbalancer = $this->getPlugin('loadbalancer');
-
-        // Set endpoints for collection
-        $this->endpoint = $this->zkStateReader->getCollectionEndpoint($this->collection);
-
-        //TODO What Solr server to connect to should be coming from a CollectionEndpoint
 
         $endpoint = $this->zkStateReader->getCollectionEndpoint($this->collection);
 
@@ -385,23 +362,22 @@ class CloudClient extends Configurable implements CloudClientInterface
     /**
      * Get the CollectionEndpoint for a specific collection.
      *
-     * @param  string|null $collection Collection name
+     * @param  string $collection Collection name
      * @return CollectionEndpoint
      */
-    public function getEndpoint(string $collection = null): CollectionEndpoint
+    public function getEndpoint(string $collection): CollectionEndpoint
     {
-        // TODO: Implement getEndpoints() method.
+        return $this->zkStateReader->getCollectionEndpoint($collection);
     }
 
     /**
      * Get all CollectionEndpoints.
      *
-     * @param  string|null $collection Collection name
      * @return CollectionEndpoint[]
      */
     public function getEndpoints(): array
     {
-        // TODO: Implement getEndpoints() method.
+        return $this->zkStateReader->getEndpoints();
     }
 
     /**
@@ -1144,23 +1120,10 @@ class CloudClient extends Configurable implements CloudClientInterface
                 case 'clienttimeout':
                     $this->clientTimeout = $value;
                     break;
-                case 'loadbalancingenabled':
-                    $this->loadBalancingEnabled = $value;
-                    break;
-                case 'failoverenabled':
-                    $this->failoverEnabled = $value;
-                    break;
             }
         }
 
         $this->zkStateReader = new ZkStateReader($this->zkHosts);
-
         $this->endpoints = $this->zkStateReader->getEndpoints();
-        if (!empty($this->defaultCollection)) {
-            $this->defaultCollectionEndpoints = $this->zkStateReader->getCollectionEndpoint($this->defaultCollection);
-        }
-
-        $loadBalancerOptions = array('failoverenabled' => $this->failoverEnabled);
-        $this->registerPlugin('loadbalancer', new Loadbalancer($loadBalancerOptions));
     }
 }

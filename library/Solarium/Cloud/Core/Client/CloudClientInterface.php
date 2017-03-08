@@ -58,7 +58,7 @@ interface CloudClientInterface
      * @param  string $collection Collection name
      * @return CollectionEndpoint
      */
-    public function getEndpoint(string $collection = null): CollectionEndpoint;
+    public function getEndpoint(string $collection): CollectionEndpoint;
 
     /**
      * Get all CollectionEndpoints.
