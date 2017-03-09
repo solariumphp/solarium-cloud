@@ -91,7 +91,7 @@ class Curl extends Configurable implements AdapterInterface
      *
      * @throws InvalidArgumentException
      *
-     * @param Request  $request
+     * @param Request            $request
      * @param CollectionEndpoint $endpoint
      *
      * @return resource
@@ -99,12 +99,12 @@ class Curl extends Configurable implements AdapterInterface
     public function createHandle($request, $endpoint)
     {
         // @codeCoverageIgnoreStart
-        $uri = $endpoint->getBaseUri().$request->getUri();
+        $url = $endpoint->getCollectionUrl().$request->getUri();
         $method = $request->getMethod();
         $options = $this->createOptions($request, $endpoint);
 
         $handler = curl_init();
-        curl_setopt($handler, CURLOPT_URL, $uri);
+        curl_setopt($handler, CURLOPT_URL, $url);
         curl_setopt($handler, CURLOPT_RETURNTRANSFER, true);
         if (!ini_get('open_basedir')) {
             curl_setopt($handler, CURLOPT_FOLLOWLOCATION, true);

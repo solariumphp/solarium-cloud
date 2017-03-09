@@ -191,7 +191,13 @@ class CloudClient extends Configurable implements CloudClientInterface
     protected $adapter;
 
     /* @var int */
-    protected $clientTimeout = 30000;
+    protected $queryTimeout = 30000;
+
+    /* @var int */
+    protected $updateTimeout = 120000;
+
+    /* @var int */
+    protected $optimizeTimeout = 120000;
 
     /* @var string Current collection*/
     protected $collection;
@@ -306,17 +312,49 @@ class CloudClient extends Configurable implements CloudClientInterface
     /**
      * @return int
      */
-    public function getClientTimeout(): int
+    public function getQueryTimeout(): int
     {
-        return $this->clientTimeout;
+        return $this->queryTimeout;
     }
 
     /**
-     * @param int $clientTimeout
+     * @param int $queryTimeout
      */
-    public function setClientTimeout(int $clientTimeout)
+    public function setQueryTimeout(int $queryTimeout)
     {
-        $this->clientTimeout = $clientTimeout;
+        $this->queryTimeout = $queryTimeout;
+    }
+
+    /**
+     * @return int
+     */
+    public function getUpdateTimeout(): int
+    {
+        return $this->updateTimeout;
+    }
+
+    /**
+     * @param int $updateTimeout
+     */
+    public function setUpdateTimeout(int $updateTimeout)
+    {
+        $this->updateTimeout = $updateTimeout;
+    }
+
+    /**
+     * @return int
+     */
+    public function getOptimizeTimeout(): int
+    {
+        return $this->optimizeTimeout;
+    }
+
+    /**
+     * @param int $optimizeTimeout
+     */
+    public function setOptimizeTimeout(int $optimizeTimeout)
+    {
+        $this->optimizeTimeout = $optimizeTimeout;
     }
 
     /**
@@ -1117,8 +1155,14 @@ class CloudClient extends Configurable implements CloudClientInterface
                 case 'zktimeout':
                     $this->zkTimeout = $value;
                     break;
-                case 'clienttimeout':
-                    $this->clientTimeout = $value;
+                case 'querytimeout':
+                    $this->queryTimeout = $value;
+                    break;
+                case 'updatetimeout':
+                    $this->updateTimeout = $value;
+                    break;
+                case 'optimizetimeout':
+                    $this->optimizeTimeout = $value;
                     break;
             }
         }
