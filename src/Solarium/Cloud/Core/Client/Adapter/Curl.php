@@ -99,12 +99,13 @@ class Curl extends Configurable implements AdapterInterface
     public function createHandle($request, $endpoint)
     {
         // @codeCoverageIgnoreStart
-        $url = $endpoint->getCollectionUrl().$request->getUri();
+        // TODO check if request is for server/core/collection
+        $uri = $endpoint->getCollectionUri().$request->getUri();
         $method = $request->getMethod();
         $options = $this->createOptions($request, $endpoint);
 
         $handler = curl_init();
-        curl_setopt($handler, CURLOPT_URL, $url);
+        curl_setopt($handler, CURLOPT_URL, $uri);
         curl_setopt($handler, CURLOPT_RETURNTRANSFER, true);
         if (!ini_get('open_basedir')) {
             curl_setopt($handler, CURLOPT_FOLLOWLOCATION, true);
@@ -117,7 +118,7 @@ class Curl extends Configurable implements AdapterInterface
         }
 
         if (!isset($options['headers']['Content-Type'])) {
-            if($method == Request::METHOD_GET){
+            if ($method == Request::METHOD_GET) {
                 $options['headers']['Content-Type'] = 'application/x-www-form-urlencoded; charset=utf-8';
             } else {
                 $options['headers']['Content-Type'] = 'application/xml; charset=utf-8';

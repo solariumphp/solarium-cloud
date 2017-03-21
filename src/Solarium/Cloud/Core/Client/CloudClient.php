@@ -82,6 +82,11 @@ class CloudClient extends Configurable implements CloudClientInterface
     const QUERY_UPDATE = 'update';
 
     /**
+     * Querytype admin.
+     */
+    const QUERY_ADMIN = 'admin';
+
+    /**
      * Querytype ping.
      */
     const QUERY_PING = 'ping';
@@ -121,6 +126,8 @@ class CloudClient extends Configurable implements CloudClientInterface
      */
     const QUERY_REALTIME_GET = 'get';
 
+    // TODO add specific SolrCloud queries
+
     /**
      * Default options.
      *
@@ -146,6 +153,16 @@ class CloudClient extends Configurable implements CloudClientInterface
         self::QUERY_SUGGESTER => 'Solarium\QueryType\Suggester\Query',
         self::QUERY_EXTRACT => 'Solarium\QueryType\Extract\Query',
         self::QUERY_REALTIME_GET => 'Solarium\QueryType\RealtimeGet\Query',
+        /* TODO
+        self::QUERY_ADMIN_CORES => 'Solarium\Cloud\QueryType\Admin\Cores',
+        self::QUERY_ADMIN_COLLECTIONS => 'Solarium\Cloud\QueryType\Admin\Collections',
+        self::QUERY_ADMIN_INFO => 'Solarium\Cloud\QueryType\Admin\Info',
+        self::QUERY_ADMIN_CONFIGS => 'Solarium\Cloud\QueryType\Admin\Configs',
+        self::QUERY_ADMIN_AUTHZ => 'Solarium\Cloud\QueryType\Admin\Authorization',
+        self::QUERY_ADMIN_AUTHC => 'Solarium\Cloud\QueryType\Admin\Authentication',
+        self::QUERY_ADMIN_ZK_PATH => 'Solarium\Cloud\QueryType\Admin\Zookeeper',
+        self::QUERY_ADMIN_METRICS => 'Solarium\Cloud\QueryType\Admin\Metrics',
+        */
     );
 
     /**
@@ -996,6 +1013,18 @@ class CloudClient extends Configurable implements CloudClientInterface
         );
 
         return $query;
+    }
+
+    /**
+     * Create a ping query instance.
+     *
+     * @param mixed $options
+     *
+     * @return \Solarium\QueryType\Ping\Query
+     */
+    public function createAdmin($options = null): \Solarium\QueryType\Admin\Query
+    {
+        return $this->createQuery(self::QUERY_PING, $options);
     }
 
     /**

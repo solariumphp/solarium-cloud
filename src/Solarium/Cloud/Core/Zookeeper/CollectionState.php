@@ -127,34 +127,34 @@ class CollectionState extends AbstractState
     }
 
     /**
-     * Array with shard names as keys and base urls as values.
+     * Array with shard names as keys and base URIs as values.
      * @return string[]
      */
-    public function getShardLeadersBaseUrls(): array
+    public function getShardLeadersBaseUris(): array
     {
-        $urls = array();
+        $uris = array();
 
         foreach ($this->getShards() as $shardName => $shard) {
-            $urls[$shardName] = $shard->getShardLeaderBaseUrl();
+            $uris[$shardName] = $shard->getShardLeaderBaseUri();
         }
 
-        return $urls;
+        return $uris;
     }
 
     /**
-     * Array with node names as keys and base urls as values.
+     * Array with node names as keys and base URIs as values.
      *
      * @return string[]
      */
-    public function getNodesBaseUrls(): array
+    public function getNodesBaseUris(): array
     {
-        $urls = array();
+        $uris = array();
 
         foreach ($this->getShards() as $shard) {
-            $urls = array_merge($shard->getNodesBaseUrls(), $urls);
+            $uris = array_merge($shard->getNodesBaseUris(), $uris);
         }
 
-        return $urls;
+        return $uris;
     }
 
     /**

@@ -197,12 +197,12 @@ class ZkStateReader
     }
 
     /**
-     * Return active base urls for all or a specific collection
+     * Return active base URIs for all or a specific collection
      * @param string $collection
      * @return array
      * @throws ZookeeperException
      */
-    public function getActiveBaseUrls(string $collection = null): array
+    public function getActiveBaseUris(string $collection = null): array
     {
         if ($collection != null) {
             $collection = $this->getCollectionName($collection);
@@ -218,9 +218,9 @@ class ZkStateReader
                 foreach ($state[self::SHARDS_PROP] as $shardname => $shard) {
                     foreach ($shard[self::REPLICAS_PROP] as $replicaName => $replica) {
                         if (isset($replica[self::STATE_PROP]) && $replica[self::STATE_PROP] === self::STATE_ACTIVE) {
-                            $baseUrl = $replica[self::BASE_URL_PROP];
-                            if (!in_array($baseUrl, $replicas)) {
-                                $replicas[$replica[self::NODE_NAME_PROP].'_'.$collectionId] = $baseUrl;
+                            $baseUri = $replica[self::BASE_URL_PROP];
+                            if (!in_array($baseUri, $replicas)) {
+                                $replicas[$replica[self::NODE_NAME_PROP].'_'.$collectionId] = $baseUri;
                             }
                         }
                     }
@@ -238,7 +238,7 @@ class ZkStateReader
      * @return array List of leaders of collection shards
      * @throws ZookeeperException
      */
-    public function getCollectionShardLeadersBaseUrl(string $collection): array
+    public function getCollectionShardLeadersBaseUri(string $collection): array
     {
         $collection = $this->getCollectionName($collection);
         $state = $this->readCollectionState($collection);
@@ -249,9 +249,9 @@ class ZkStateReader
             foreach ($state[self::SHARDS_PROP] as $shardname => $shard) {
                 foreach ($shard[self::REPLICAS_PROP] as $replicaName => $replica) {
                     if (isset($replica[self::LEADER_PROP]) && $replica[self::LEADER_PROP] === 'true') {
-                        $baseUrl = $replica[self::BASE_URL_PROP];
-                        if (!in_array($baseUrl, $leaders)) {
-                            $leaders[$replica[self::NODE_NAME_PROP].'_'.$collection] = $baseUrl;
+                        $baseUri = $replica[self::BASE_URL_PROP];
+                        if (!in_array($baseUri, $leaders)) {
+                            $leaders[$replica[self::NODE_NAME_PROP].'_'.$collection] = $baseUri;
                         }
                     }
                 }

@@ -39,8 +39,8 @@ class ReplicaState extends AbstractState
     protected $name;
     /** @var  string Name of the core */
     protected $core;
-    /** @var  string Base url of shard replica */
-    protected $baseUrl;
+    /** @var  string Base uri of shard replica */
+    protected $baseUri;
     /** @var  string */
     protected $nodeName;
     /** @var  bool Whether or not this replica is a shard leader */
@@ -94,9 +94,9 @@ class ReplicaState extends AbstractState
     /**
      * @return string
      */
-    public function getBaseUrl(): string
+    public function getBaseUri(): string
     {
-        return $this->baseUrl;
+        return $this->baseUri;
     }
 
     /**
@@ -128,7 +128,7 @@ class ReplicaState extends AbstractState
         $this->name = key($this->state);
         $state = reset($this->state);
         $this->core = $this->getStateProp(ZkStateReader::CORE_NAME_PROP);
-        $this->baseUrl = $this->getStateProp(ZkStateReader::BASE_URL_PROP);
+        $this->baseUri = $this->getStateProp(ZkStateReader::BASE_URL_PROP);
         $this->nodeName = $this->getStateProp(ZkStateReader::NODE_NAME_PROP);
         $this->leader = $this->getStateProp(ZkStateReader::LEADER_PROP, false);
         $this->replicaState = $this->getStateProp(ZkStateReader::STATE_PROP);

@@ -30,6 +30,7 @@
 namespace Solarium\Cloud\Core\Client;
 
 use Solarium\Cloud\Core\Zookeeper\CollectionState;
+use Solarium\Core\Client\AbstractEndpoint;
 use Solarium\Core\Configurable;
 
 
@@ -39,17 +40,19 @@ use Solarium\Core\Configurable;
  * Class for describing a SolrCloud collection endpoint.
  * @package Solarium\Cloud\Core\Client
  */
-class CollectionEndpoint extends Configurable
+class CollectionEndpoint extends Configurable // TODO implements EndpointInterface
 {
+    /** @var  */
+    //protected $type = AbstractEndpoint::SOLRCLOUD;
     /** @var  string Name of the collection */
     protected $name;
     /** @var  CollectionState Collection state retrieved from ZkStateReader */
     protected $state;
 
     /** @var  string[]  */
-    protected $leaderBaseUrls;
+    protected $leaderBaseUris;
     /** @var  string[]  */
-    protected $nodesBaseUrls;
+    protected $nodesBaseUris;
 
     /** @var  string */
     protected $scheme;
@@ -163,31 +166,17 @@ class CollectionEndpoint extends Configurable
     }
 
     /**
-     * Get the base url for all requests.
+     * Get the base uri for all requests.
      *
      * Based on scheme, host, port and path
      *
      * @return string
      */
-    public function getBaseUrl()
+    public function getBaseUri()
     {
-        $url = $this->getScheme().'://'.$this->getHost().':'.$this->getPort().$this->getPath().'/';
+        $uri = $this->getScheme().'://'.$this->getHost().':'.$this->getPort().$this->getPath().'/'.$this->getCollection().'/';
 
-        return $url;
-    }
-
-    /**
-     * Get the collection url for all requests.
-     *
-     * Based on scheme, host, port and path
-     *
-     * @return string
-     */
-    public function getCollectionUrl()
-    {
-        $url = $this->getScheme().'://'.$this->getHost().':'.$this->getPort().$this->getPath().'/'.$this->getName().'/';
-
-        return $url;
+        return $uri;
     }
 
     /**
@@ -216,13 +205,13 @@ class CollectionEndpoint extends Configurable
      * Magic method enables a object to be transformed to a string.
      *
      * Get a summary showing significant variables in the object
-     * note: url resource is decoded for readability
+     * note: uri resource is decoded for readability
      *
      * @return string
      */
     public function __toString()
     {
-        $output = __CLASS__.'::__toString'."\n".'base url: '.$this->getBaseUrl()."\n".'host: '.$this->getHost()."\n".'port: '.$this->getPort()."\n".'path: '.$this->getPath()."\n".'collection: '.$this->getCore()."\n".'timeout: '.$this->getTimeout()."\n".'authentication: '.print_r($this->getAuthentication(), 1);
+        $output = __CLASS__.'::__toString'."\n".'base uri: '.$this->getBaseUri()."\n".'host: '.$this->getHost()."\n".'port: '.$this->getPort()."\n".'path: '.$this->getPath()."\n".'collection: '.$this->getCore()."\n".'timeout: '.$this->getTimeout()."\n".'authentication: '.print_r($this->getAuthentication(), 1);
 
         return $output;
     }
@@ -238,15 +227,15 @@ class CollectionEndpoint extends Configurable
     /**
      *
      */
-    protected function setRandomNodeBaseUrl()
+    protected function setRandomNodeBaseUri()
     {
-        shuffle($this->nodesBaseUrls);
-        $randomUrl = reset($this->nodesBaseUrls);
-        $parseUrl = parse_url($randomUrl);
-        $this->scheme = $parseUrl['scheme'];
-        $this->host = $parseUrl['host'];
-        $this->port = $parseUrl['port'];
-        $this->path = $parseUrl['path'];
+        shuffle($this->nodesBaseUris);
+        $randomUri = reset($this->nodesBaseUris);
+        $parseUri = parse_url($randomUri);
+        $this->scheme = $parseUri['scheme'];
+        $this->host = $parseUri['host'];
+        $this->port = $parseUri['port'];
+        $this->path = $parseUri['path'];
     }
 
     /**
@@ -260,8 +249,8 @@ class CollectionEndpoint extends Configurable
     {
         $this->getCollectionState();
         $this->name = $this->state->getName();
-        $this->leaderBaseUrls = $this->state->getShardLeadersBaseUrls();
-        $this->nodesBaseUrls = $this->state->getNodesBaseUrls();
-        $this->setRandomNodeBaseUrl();
+        $this->leaderBaseUris = $this->state->getShardLeadersBaseUris();
+        $this->nodesBaseUris = $this->state->getNodesBaseUris();
+        $this->setRandomNodeBaseUri();
     }
 }

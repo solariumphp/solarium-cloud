@@ -119,24 +119,24 @@ class ShardState extends AbstractState
     /**
      * @return string
      */
-    public function getShardLeaderBaseUrl(): string
+    public function getShardLeaderBaseUri(): string
     {
-        return $this->getShardLeader()->getBaseUrl();
+        return $this->getShardLeader()->getBaseUri();
     }
 
     /**
-     * Array with node names as keys and base urls as values.
+     * Array with node names as keys and base URIs as values.
      *
      * @return string[]
      */
-    public function getNodesBaseUrls(): array
+    public function getNodesBaseUris(): array
     {
-        $urls = array();
+        $uris = array();
         foreach ($this->getReplicas() as $replica) {
-            $urls[$replica->getNodeName()] = $replica->getBaseUrl();
+            $uris[$replica->getNodeName()] = $replica->getBaseUri();
         }
 
-        return $urls;
+        return $uris;
     }
 
     /**
