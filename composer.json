@@ -3,12 +3,13 @@
     "type": "library",
     "description": "PHP SolrCloud client",
     "keywords": ["solr", "solrcloud", "solarium", "solr-client", "search", "zookeeper", "zookeeper-client", "php"],
-    "homepage": "http://www.solarium-project.org",
+    "homepage": "https://github.com/solariumphp/solarium-cloud",
     "license": "BSD-2-Clause",
     "authors": [
         {
             "name": "Jeroen Steggink",
-            "homepage": "https://knowsy.nl"
+            "homepage": "https://knowsy.nl",
+            "role": "Developer"
         },
         {
             "name": "See GitHub contributors",
