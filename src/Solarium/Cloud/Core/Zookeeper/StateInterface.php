@@ -30,53 +30,23 @@
 namespace Solarium\Cloud\Core\Zookeeper;
 
 /**
- * Class State
- * @package Solarium\Cloud\Core\Zookeeper
+ * Interface StateInterface
  */
-abstract class AbstractState implements StateInterface
+interface StateInterface
 {
-    /** @var  array State array retrieved by ZkStateReader */
-    protected $stateRaw;
-
-    /** @var array Live nodes array received from Zookeeper */
-    protected $liveNodes;
 
     /**
-     * State constructor.
      * @param array $state     State array received from Zookeeper
      * @param array $liveNodes Live nodes array received from Zookeeper
+     * @return mixed
      */
-    public function __construct(array $state, array $liveNodes)
-    {
-        $this->update($state, $liveNodes);
-    }
+    public function update(array $state, array $liveNodes);
 
     /**
-     * {@inheritDoc}
+     * @param string $name
+     * @param null   $defaultValue
+     * @return mixed
      */
-    public function update(array $state, array $liveNodes)
-    {
-        $this->stateRaw = $state;
-        $this->liveNodes = $liveNodes;
-        $this->init();
-    }
+    public function getStateProp(string $name, $defaultValue = null);
 
-    /**
-     * @param string     $name
-     * @param mixed|null $defaultValue
-     * @return array
-     */
-    public function getStateProp(string $name, $defaultValue = null)
-    {
-        if (isset($this->stateRaw[$name])) {
-            return $this->stateRaw[$name];
-        }
-
-        return $defaultValue;
-    }
-
-    /**
-     * Initialize method
-     */
-    abstract protected function init();
 }
