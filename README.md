@@ -6,8 +6,10 @@ This is an alpha version of solarium-cloud. Do not use in production yet.
 ## Requirement
 The extension requires the PHP Zookeeper extension, which can be found here:
 https://pecl.php.net/package/zookeeper
-In order to compile the extension you need to have the Apache Zookeeper C-library installed.
 
+In order to compile the extension you need to have the Apache Zookeeper C-library installed.
+Instructions on how to build the extension can be found here:
+https://github.com/php-zookeeper/php-zookeeper
 
 ## Example use
 You can create a CloudClient using the following code:
