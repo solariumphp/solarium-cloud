@@ -277,7 +277,7 @@ class CloudClient extends Configurable implements CloudClientInterface
     }
 
     /**
-     * @return mixed
+     * {@inheritDoc}
      */
     public function getDefaultCollection(): string
     {
@@ -285,16 +285,18 @@ class CloudClient extends Configurable implements CloudClientInterface
     }
 
     /**
-     * @param string $collection
+     * {@inheritDoc}
      */
-    public function setDefaultCollection(string $collection)
+    public function setDefaultCollection(string $collection): CloudClientInterface
     {
         $this->setOption('defaultcollection', $collection);
         $this->defaultCollection = $collection;
+
+        return $this;
     }
 
     /**
-     * @return string
+     * {@inheritDoc}
      */
     public function getCollection(): string
     {
@@ -302,16 +304,18 @@ class CloudClient extends Configurable implements CloudClientInterface
     }
 
     /**
-     * @param string $collection
+     *{@inheritDoc}
      */
-    public function setCollection(string $collection)
+    public function setCollection(string $collection): CloudClientInterface
     {
         $this->setOption('collection', $collection);
         $this->collection = $collection;
+
+        return $this;
     }
 
     /**
-     * @return mixed
+     * {@inheritDoc}
      */
     public function getIdField(): string
     {
@@ -319,15 +323,17 @@ class CloudClient extends Configurable implements CloudClientInterface
     }
 
     /**
-     * @param string $idField
+     * {@inheritDoc}
      */
-    public function setIdField(string $idField)
+    public function setIdField(string $idField): CloudClientInterface
     {
         $this->setOption('idField', $idField);
+
+        return $this;
     }
 
     /**
-     * @return int
+     * {@inheritDoc}
      */
     public function getQueryTimeout(): int
     {
@@ -335,15 +341,17 @@ class CloudClient extends Configurable implements CloudClientInterface
     }
 
     /**
-     * @param int $queryTimeout
+     * {@inheritDoc}
      */
-    public function setQueryTimeout(int $queryTimeout)
+    public function setQueryTimeout(int $queryTimeout): CloudClientInterface
     {
         $this->queryTimeout = $queryTimeout;
+
+        return $this;
     }
 
     /**
-     * @return int
+     * {@inheritDoc}
      */
     public function getUpdateTimeout(): int
     {
@@ -351,15 +359,17 @@ class CloudClient extends Configurable implements CloudClientInterface
     }
 
     /**
-     * @param int $updateTimeout
+     * {@inheritDoc}
      */
-    public function setUpdateTimeout(int $updateTimeout)
+    public function setUpdateTimeout(int $updateTimeout): CloudClientInterface
     {
         $this->updateTimeout = $updateTimeout;
+
+        return $this;
     }
 
     /**
-     * @return int
+     * {@inheritDoc}
      */
     public function getOptimizeTimeout(): int
     {
@@ -367,15 +377,17 @@ class CloudClient extends Configurable implements CloudClientInterface
     }
 
     /**
-     * @param int $optimizeTimeout
+     * {@inheritDoc}
      */
-    public function setOptimizeTimeout(int $optimizeTimeout)
+    public function setOptimizeTimeout(int $optimizeTimeout): CloudClientInterface
     {
         $this->optimizeTimeout = $optimizeTimeout;
+
+        return $this;
     }
 
     /**
-     * @return int
+     * {@inheritDoc}
      */
     public function getZkTimeout(): int
     {
@@ -383,15 +395,17 @@ class CloudClient extends Configurable implements CloudClientInterface
     }
 
     /**
-     * @param int $timeout
+     * {@inheritDoc}
      */
-    public function setZkTimeout(int $timeout)
+    public function setZkTimeout(int $timeout): CloudClientInterface
     {
         $this->zkTimeout = $timeout;
+
+        return $this;
     }
 
     /**
-     * @return bool
+     * {@inheritDoc}
      */
     public function isDirectUpdatesToLeadersOnly(): bool
     {
@@ -399,26 +413,27 @@ class CloudClient extends Configurable implements CloudClientInterface
     }
 
     /**
-     *
+     * {@inheritDoc}
      */
-    public function sendDirectUpdatesToShardLeadersOnly()
+    public function sendDirectUpdatesToShardLeadersOnly(): CloudClientInterface
     {
         $this->directUpdatesToLeadersOnly = true;
+
+        return $this;
     }
 
     /**
-     *
+     * {@inheritDoc}
      */
-    public function sendDirectUpdatesToAnyShardReplica()
+    public function sendDirectUpdatesToAnyShardReplica(): CloudClientInterface
     {
         $this->directUpdatesToLeadersOnly = false;
+
+        return $this;
     }
 
     /**
-     * Get the CollectionEndpoint for a specific collection.
-     *
-     * @param  string $collection Collection name
-     * @return CollectionEndpoint
+     * {@inheritDoc}
      */
     public function getEndpoint(string $collection): CollectionEndpoint
     {
@@ -426,9 +441,7 @@ class CloudClient extends Configurable implements CloudClientInterface
     }
 
     /**
-     * Get all CollectionEndpoints.
-     *
-     * @return CollectionEndpoint[]
+     * {@inheritDoc}
      */
     public function getEndpoints(): array
     {
@@ -436,10 +449,7 @@ class CloudClient extends Configurable implements CloudClientInterface
     }
 
     /**
-     * Get all leader endpoints of for specific collection
-     *
-     * @param  string|null $collection Collection name
-     * @return CollectionEndpoint[]
+     * {@inheritDoc}
      */
     public function getLeaderEndpoints(string $collection = null)
     {
@@ -447,50 +457,27 @@ class CloudClient extends Configurable implements CloudClientInterface
     }
 
     /**
-     * Set the adapter
-     *
-     * The adapter has to be a class that implements the AdapterInterface
-     *
-     * If a string is passed it is assumed to be the classname and it will be
-     * instantiated on first use. This requires the availability of the class
-     * through autoloading or a manual require before calling this method.
-     * Any existing adapter instance will be removed by this method, this way an
-     * instance of the new adapter type will be created upon the next usage of
-     * the adapter (lazy-loading)
-     *
-     * If an adapter instance is passed it will replace the current adapter
-     * immediately, bypassing the lazy loading.
-     *
-     * @throws InvalidArgumentException
-     * @param  string|Adapter\AdapterInterface $adapter
-     * @return ClientInterface                 Provides fluent interface
+     * {@inheritDoc}
      */
     public function setAdapter($adapter): CloudClientInterface
     {
         if (is_string($adapter)) {
             $this->adapter = null;
-
-            return $this->setOption('adapter', $adapter);
+            $this->setOption('adapter', $adapter);
         } elseif ($adapter instanceof AdapterInterface) {
             // forward options
             $adapter->setOptions($this->getOption('adapteroptions'));
             // overwrite existing adapter
             $this->adapter = $adapter;
-
-            return $this;
         } else {
             throw new InvalidArgumentException('Invalid adapter input for setAdapter');
         }
+
+        return $this;
     }
 
     /**
-     * Get the adapter instance
-     *
-     * If {@see $adapter} doesn't hold an instance a new one will be created by
-     * calling {@see createAdapter()}
-     *
-     * @param  boolean $autoload
-     * @return AdapterInterface
+     * {@inheritDoc}
      */
     public function getAdapter($autoload = true): AdapterInterface
     {
@@ -502,44 +489,9 @@ class CloudClient extends Configurable implements CloudClientInterface
     }
 
     /**
-     * Create an adapter instance.
-     *
-     * The 'adapter' entry in {@link $options} will be used to create an
-     * adapter instance. This entry can be the default value of
-     * {@link $options}, a value passed to the constructor or a value set by
-     * using {@link setAdapter()}
-     *
-     * This method is used for lazy-loading the adapter upon first use in
-     * {@link getAdapter()}
-     *
-     * @throws InvalidArgumentException
+     * {@inheritDoc}
      */
-    protected function createAdapter()
-    {
-        $adapterClass = $this->getOption('adapter');
-        $adapter = new $adapterClass();
-
-        // check interface
-        if (!($adapter instanceof AdapterInterface)) {
-            throw new InvalidArgumentException('An adapter must implement the AdapterInterface');
-        }
-
-        $adapter->setOptions($this->getOption('adapteroptions'));
-        $this->adapter = $adapter;
-    }
-
-    /**
-     * Register a querytype
-     *
-     * You can also use this method to override any existing querytype with a new mapping.
-     * This requires the availability of the classes through autoloading or a manual
-     * require before calling this method.
-     *
-     * @param  string $type
-     * @param  string $queryClass
-     * @return self   Provides fluent interface
-     */
-    public function registerQueryType($type, $queryClass)
+    public function registerQueryType($type, $queryClass): CloudClientInterface
     {
         $this->queryTypes[$type] = $queryClass;
 
@@ -565,6 +517,8 @@ class CloudClient extends Configurable implements CloudClientInterface
 
             $this->registerQueryType($type, $class);
         }
+
+        return $this;
     }
 
     /**
@@ -592,9 +546,9 @@ class CloudClient extends Configurable implements CloudClientInterface
      *
      * @param EventDispatcherInterface $eventDispatcher
      *
-     * @return $this
+     * @return CloudClientInterface
      */
-    public function setEventDispatcher(EventDispatcherInterface $eventDispatcher)
+    public function setEventDispatcher(EventDispatcherInterface $eventDispatcher): CloudClientInterface
     {
         $this->eventDispatcher = $eventDispatcher;
 
@@ -669,7 +623,7 @@ class CloudClient extends Configurable implements CloudClientInterface
      * Get a plugin instance
      *
      * @throws OutOfBoundsException
-     * @param  string $key
+     * @param  string  $key
      * @param  boolean $autocreate
      * @return PluginInterface|null
      */
@@ -685,9 +639,9 @@ class CloudClient extends Configurable implements CloudClientInterface
             } else {
                 throw new OutOfBoundsException('Cannot autoload plugin of unknown type: '.$key);
             }
-        } else {
-            return;
         }
+
+        return null;
     }
 
     /**
@@ -1198,5 +1152,22 @@ class CloudClient extends Configurable implements CloudClientInterface
 
         $this->zkStateReader = new ZkStateReader($this->zkHosts);
         $this->endpoints = $this->zkStateReader->getEndpoints();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected function createAdapter()
+    {
+        $adapterClass = $this->getOption('adapter');
+        $adapter = new $adapterClass();
+
+        // check interface
+        if (!($adapter instanceof AdapterInterface)) {
+            throw new InvalidArgumentException('An adapter must implement the AdapterInterface');
+        }
+
+        $adapter->setOptions($this->getOption('adapteroptions'));
+        $this->adapter = $adapter;
     }
 }

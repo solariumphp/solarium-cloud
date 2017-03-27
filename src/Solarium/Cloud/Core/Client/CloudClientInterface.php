@@ -53,6 +53,114 @@ interface CloudClientInterface
 {
 
     /**
+     * @return string
+     */
+    public function getDefaultCollection(): string;
+
+    /**
+     * @param string $collection
+     * @return CloudClientInterface Provides fluent interface
+     */
+    public function setDefaultCollection(string $collection): CloudClientInterface;
+
+    /**
+     * Get the collection
+     * @return string
+     */
+    public function getCollection(): string;
+
+    /**
+     * Set the collection
+     *
+     * @param string $collection
+     * @return CloudClientInterface Provides fluent interface
+     */
+    public function setCollection(string $collection): CloudClientInterface;
+
+    /**
+     * The the name of the id field
+     * @return string
+     */
+    public function getIdField(): string;
+
+    /**
+     * Set the name of the id field
+     * @param string $idField
+     * @return CloudClientInterface Provides fluent interface
+     */
+    public function setIdField(string $idField): CloudClientInterface;
+
+    /**
+     * @return int
+     */
+    public function getQueryTimeout(): int;
+
+    /**
+     * @param int $queryTimeout
+     * @return CloudClientInterface Provides fluent interface
+     */
+    public function setQueryTimeout(int $queryTimeout): CloudClientInterface;
+
+    /**
+     * Get update timeout
+     * @return int
+     */
+    public function getUpdateTimeout(): int;
+
+    /**
+     * Set update timeout
+     *
+     * @param int $updateTimeout
+     * @return CloudClientInterface Provides fluent interface
+     */
+    public function setUpdateTimeout(int $updateTimeout): CloudClientInterface;
+
+    /**
+     * Return optimize timeout
+     *
+     * @return int
+     */
+    public function getOptimizeTimeout(): int;
+
+    /**
+     * Set optimize timeout
+     *
+     * @param int $optimizeTimeout
+     * @return CloudClientInterface Provides fluent interface
+     */
+    public function setOptimizeTimeout(int $optimizeTimeout): CloudClientInterface;
+
+    /**
+     * Get Zookeeper client timeout
+     *
+     * @return int
+     */
+    public function getZkTimeout(): int;
+
+    /**
+     * Set Zookeeper client timeout
+     *
+     * @param int $timeout
+     * @return CloudClientInterface Provides fluent interface
+     */
+    public function setZkTimeout(int $timeout): CloudClientInterface;
+
+    /**
+     * @return bool
+     */
+    public function isDirectUpdatesToLeadersOnly(): bool;
+
+    /**
+     * @return CloudClientInterface Provides fluent interface
+     */
+    public function sendDirectUpdatesToShardLeadersOnly(): CloudClientInterface;
+
+    /**
+     * @return CloudClientInterface Provides fluent interface
+     */
+    public function sendDirectUpdatesToAnyShardReplica(): CloudClientInterface;
+
+    /**
      * Get the CollectionEndpoint for a specific collection.
      *
      * @param  string $collection Collection name
@@ -108,7 +216,7 @@ interface CloudClientInterface
      *
      * @param  string $type
      * @param  string $queryClass
-     * @return self   Provides fluent interface
+     * @return CloudClientInterface   Provides fluent interface
      */
     public function registerQueryType($type, $queryClass);
 
@@ -116,7 +224,7 @@ interface CloudClientInterface
      * Register multiple querytypes
      *
      * @param  array $queryTypes
-     * @return self  Provides fluent interface
+     * @return CloudClientInterface  Provides fluent interface
      */
     public function registerQueryTypes($queryTypes);
 
@@ -154,7 +262,7 @@ interface CloudClientInterface
      * @param  string                 $key
      * @param  string|PluginInterface $plugin
      * @param  array                  $options
-     * @return self Provides fluent interface
+     * @return CloudClientInterface Provides fluent interface
      */
     public function registerPlugin($key, $plugin, $options = array());
 
@@ -162,7 +270,7 @@ interface CloudClientInterface
      * Register multiple plugins
      *
      * @param  array $plugins
-     * @return self  Provides fluent interface
+     * @return CloudClientInterface Provides fluent interface
      */
     public function registerPlugins($plugins);
 
@@ -206,8 +314,8 @@ interface CloudClientInterface
      * Creates a result object
      *
      * @throws UnexpectedValueException;
-     * @param  QueryInterface $query
-     * @param  array \Solarium\Core\Client\Response $response
+     * @param  QueryInterface                 $query
+     * @param  \Solarium\Core\Client\Response $response
      * @return ResultInterface
      */
     public function createResult(QueryInterface $query, \Solarium\Core\Client\Response $response): ResultInterface;
@@ -225,7 +333,7 @@ interface CloudClientInterface
      *
      * @param \Solarium\Core\Client\Request $request
      *
-     * @return \Solarium\Core\Client\Request
+     * @return \Solarium\Core\Client\Response
      */
     public function executeRequest(\Solarium\Core\Client\Request $request): \Solarium\Core\Client\Response;
 
