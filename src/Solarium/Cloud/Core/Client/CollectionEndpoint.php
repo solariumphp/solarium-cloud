@@ -30,6 +30,7 @@
 namespace Solarium\Cloud\Core\Client;
 
 use Solarium\Cloud\Core\Zookeeper\CollectionState;
+use Solarium\Cloud\Exception\ZookeeperException;
 use Solarium\Core\Client\AbstractEndpoint;
 use Solarium\Core\Configurable;
 
@@ -65,10 +66,10 @@ class CollectionEndpoint extends Configurable // TODO implements EndpointInterfa
 
     /**
      * CollectionEndpoint constructor.
-     * @param array              $state   The collection state returned by ZkStateReader
+     * @param CollectionState    $state   The collection state returned by ZkStateReader
      * @param array|\Zend_Config $options
      */
-    public function __construct(CollectionState $state, array $options = null)
+    public function __construct(CollectionState &$state, array $options = null)
     {
         $this->state = $state;
         parent::__construct($options);
@@ -168,15 +169,25 @@ class CollectionEndpoint extends Configurable // TODO implements EndpointInterfa
     /**
      * Get the base uri for all requests.
      *
-     * Based on scheme, host, port and path
+     * Based on host, path, port and core/collection options.
      *
      * @return string
      */
-    public function getBaseUri()
+    public function getBaseUri(): string
     {
-        $uri = $this->getScheme().'://'.$this->getHost().':'.$this->getPort().$this->getPath().'/'.$this->getCollection().'/';
+        $uri = $this->getServerUri().$this->getCollection().'/';
 
         return $uri;
+    }
+
+    /**
+     * Get the server uri
+     *
+     * @return string
+     */
+    public function getServerUri(): string
+    {
+        return $this->getScheme().'://'.$this->getHost().':'.$this->getPort().$this->getPath().'/';
     }
 
     /**
@@ -229,13 +240,15 @@ class CollectionEndpoint extends Configurable // TODO implements EndpointInterfa
      */
     protected function setRandomNodeBaseUri()
     {
-        shuffle($this->nodesBaseUris);
-        $randomUri = reset($this->nodesBaseUris);
-        $parseUri = parse_url($randomUri);
-        $this->scheme = $parseUri['scheme'];
-        $this->host = $parseUri['host'];
-        $this->port = $parseUri['port'];
-        $this->path = $parseUri['path'];
+        if (!empty($this->nodesBaseUris)) {
+            shuffle($this->nodesBaseUris);
+            $randomUri = reset($this->nodesBaseUris);
+            $parseUri = parse_url($randomUri);
+            $this->scheme = $parseUri['scheme'];
+            $this->host = $parseUri['host'];
+            $this->port = $parseUri['port'];
+            $this->path = $parseUri['path'];
+        }
     }
 
     /**
