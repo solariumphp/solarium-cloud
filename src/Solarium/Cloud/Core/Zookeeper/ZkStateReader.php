@@ -102,6 +102,9 @@ class ZkStateReader
     /** @var array A view of the current state of all collections; combines all the different state sources into a single view. */
     protected $clusterState;
 
+    /** @var  array Shard leaders for every collection */
+    protected $collectionShardLeaders;
+
     /** @var  array All the live nodes */
     protected $liveNodes = array();
     /** @var  array Cluster properties from clusterproperties.json */
@@ -112,7 +115,12 @@ class ZkStateReader
 
     /** @var Zookeeper Zookeeper client */
     protected $zkClient;
+    /** @var array Zookeeper client callback container */
+    protected $zkCallback = array();
+
+    /** @var  array Collections */
     protected $collections;
+    /** @var  array Aliases of collections */
     protected $aliases;
 
     protected $zkTimeout = 10000;
@@ -125,15 +133,15 @@ class ZkStateReader
     public function __construct(string $hosts, AdapterInterface $cache = null)
     {
         //TODO check cache to see if we need to connect to zookeeper
-        $zkState = null;
+        //$zkState = null;
 
         if ($cache != null) {
-            $zkState = $cache->getItem("solarium-cloud.zookeeper");
+            //$zkState = $cache->getItem("solarium-cloud.zookeeper");
         }
-        if ($cache == null || !$zkState->isHit()) {
+        //if ($cache == null || !$zkState->isHit()) {
             $this->zkClient = new Zookeeper($hosts, null, $this->zkTimeout);
             $this->readZookeeper();
-        }
+        //}
     }
 
     /**
@@ -143,9 +151,9 @@ class ZkStateReader
     {
         if ($this->aliases != null && isset($this->aliases[self::COLLECTION_PROP])) {
             return $this->aliases[self::COLLECTION_PROP];
-        } else {
-            return array();
         }
+
+        return array();
     }
 
     /**
@@ -155,9 +163,9 @@ class ZkStateReader
     {
         if ($this->collections != null) {
             return $this->collections;
-        } else {
-            return array();
         }
+
+        return array();
     }
 
     /**
@@ -167,9 +175,9 @@ class ZkStateReader
     {
         if ($this->clusterState != null) {
             return $this->clusterState;
-        } else {
-            return array();
         }
+
+        return array();
     }
 
     /**
@@ -179,9 +187,9 @@ class ZkStateReader
     {
         if ($this->clusterProperties != null) {
             return $this->clusterProperties;
-        } else {
-            return array();
         }
+
+        return array();
     }
 
     /**
@@ -191,9 +199,9 @@ class ZkStateReader
     {
         if ($this->liveNodes != null) {
             return $this->liveNodes;
-        } else {
-            return array();
         }
+
+        return array();
     }
 
     /**
@@ -206,7 +214,7 @@ class ZkStateReader
     {
         if ($collection != null) {
             $collection = $this->getCollectionName($collection);
-            $states[$collection] = $this->readCollectionState($collection);
+            $states[$collection] = $this->getCollectionState($collection);
         } else {
             $states = $this->clusterState;
         }
@@ -234,6 +242,7 @@ class ZkStateReader
     }
 
     /**
+     * TODO This method is not relevant. leaders are specific for shards, not collections alone
      * @param string $collection Collection name
      * @return array List of leaders of collection shards
      * @throws ZookeeperException
@@ -241,7 +250,7 @@ class ZkStateReader
     public function getCollectionShardLeadersBaseUri(string $collection): array
     {
         $collection = $this->getCollectionName($collection);
-        $state = $this->readCollectionState($collection);
+        $state = $this->getCollectionState($collection);
 
         $leaders = array();
 
@@ -273,23 +282,30 @@ class ZkStateReader
         $endpoints = array();
 
         foreach ($this->collections as $collection) {
-            $endpoints[$collection] = new CollectionState(array($collection => $this->readCollectionState($collection)));
+            $endpoints[$collection] = $this->getCollectionState($collection);
         }
 
         return $endpoints;
     }
 
-    // TODO this should be part of a CollectionEndpoint
     /**
      * Return all active collection CollectionStates
      * @param string $collection Collection name
      * @return CollectionState
+     * @throws ZookeeperException
      */
     public function getCollectionState(string $collection): CollectionState
     {
         $collection = $this->getCollectionName($collection);
+        if ($this->clusterState != null) {
+            if (!isset($this->clusterState[$collection])) {
+                throw new ZookeeperException("Collection '$collection' does not exist.'");
+            }
 
-        return new CollectionState(array($collection => $this->readCollectionState($collection)));
+            return new CollectionState(array($collection => $this->clusterState[$collection]), $this->getLiveNodes());
+        }
+
+        throw new ZookeeperException("The cluster state is unknown.");
     }
 
     /**
@@ -304,6 +320,8 @@ class ZkStateReader
         if (reset($state) === null || empty(reset($state))) {
             throw new ZookeeperException("Collection '$collection' does not exist.'");
         }
+
+        //TODO it would be great to have the CollectionEndpoint update when the state is updated
         $endpoint = new CollectionEndpoint($state);
 
         return $endpoint;
@@ -364,34 +382,23 @@ class ZkStateReader
     }
 
     /**
-     * @param string $collection
-     * @return array
-     * @throws ZookeeperException
+     * Destruct ZkStateReader object
      */
-    protected function readCollectionState(string $collection): array
+    public function __destruct()
     {
-        $collection = $this->getCollectionName($collection);
-        if ($this->clusterState != null) {
-            if (!isset($this->clusterState[$collection])) {
-                throw new ZookeeperException("Collection '$collection' does not exist.'");
-            }
-
-            return $this->clusterState[$collection];
-        } else {
-            return array();
-        }
+        $this->zkClient = null;
     }
 
     /**
      * Reads data from Zookeeper
      */
-    protected function readZookeeper()
+    public function readZookeeper()
     {
+        $this->readLiveNodes();
         $this->readAliases();
         $this->readCollectionList();
         $this->readClusterState();
         $this->readSecurityData();
-        $this->readLiveNodes();
     }
 
     /**
@@ -399,7 +406,7 @@ class ZkStateReader
      */
     protected function readAliases()
     {
-        $this->readData(self::ALIASES, $this->aliases, true, true);
+        $this->readData(self::ALIASES, $this->aliases, true);
     }
 
     /**
@@ -416,7 +423,7 @@ class ZkStateReader
     protected function readClusterState()
     {
         //Compatibility for older versions of Solr
-        $this->readData(self::CLUSTER_STATE, $this->legacyCollectionStates, true, true);
+        $this->readData(self::CLUSTER_STATE, $this->legacyCollectionStates, true);
 
         if (is_array($this->collections)) {
             foreach ($this->collections as $i => $collection) {
@@ -424,9 +431,24 @@ class ZkStateReader
                 if ($this->zkClient->exists($stateFile)) {
                     $this->collectionStates = array_merge($this->collectionStates, json_decode($this->zkClient->get($stateFile), true));
                 }
+
+                foreach ($this->getChildren(self::COLLECTIONS_ZKNODE.'/'.$collection.'/'.self::SHARD_LEADERS_ZKNODE) as $shard) {
+                    $leaderInfoLocation = self::COLLECTIONS_ZKNODE.'/'.$collection.'/'.self::SHARD_LEADERS_ZKNODE.'/'.$shard.'/'.self::LEADER_PROP;
+                    if ($this->zkClient->exists($leaderInfoLocation)) {
+                        $this->readData(
+                            $leaderInfoLocation,
+                            $this->collectionShardLeaders[$collection][$shard],
+                            true
+                        );
+                    } else {
+                        // This shard has no leader
+                        $this->collectionShardLeaders[$collection][$shard] = array();
+                    }
+                }
             }
         }
 
+        // TODO instead of a merge, create CollectionState array in $this->clusterState
         $this->clusterState = array_merge($this->collectionStates, $this->legacyCollectionStates);
     }
 
@@ -435,23 +457,35 @@ class ZkStateReader
      */
     protected function readClusterProperties()
     {
-        $this->readData(self::CLUSTER_PROPS, $this->clusterProperties, true, true);
+        $this->readData(self::CLUSTER_PROPS, $this->clusterProperties, true);
     }
 
+    /**
+     *  Reads the security data from Zookeeper
+     */
     protected function readSecurityData()
     {
-        $this->readData(self::SOLR_SECURITY_CONF_PATH, $this->securityData, true, true);
+        $this->readData(self::SOLR_SECURITY_CONF_PATH, $this->securityData, true);
     }
 
+    /**
+     * Reads the live node information from Zookeeper
+     */
     protected function readLiveNodes()
     {
         $this->liveNodes = $this->getChildren(self::LIVE_NODES_ZKNODE);
     }
 
-    protected function readData(string $location, &$property, bool $jsonDecode, bool $jsonAssoc = false)
+    /**
+     * @param string $location
+     * @param $property
+     * @param bool $jsonDecode
+     * @throws ZookeeperException
+     */
+    protected function readData(string $location, &$property, bool $jsonDecode = true)
     {
         if ($this->zkClient->exists($location)) {
-            $property = $jsonDecode ? json_decode($this->zkClient->get($location), $jsonAssoc) : $this->zkClient->get($location);
+            $property = $jsonDecode ? json_decode($this->zkClient->get($location), true) : $this->zkClient->get($location);
         } else {
             throw new ZookeeperException("Cannot read data from location '$location'");
         }
@@ -471,4 +505,80 @@ class ZkStateReader
         }
     }
 
+    /**
+     * Wath a given path
+     * @param string   $path     the path to node
+     * @param callable $callback callback function
+     * @return string|null
+     */
+    protected function watch($path, $callback)
+    {
+        if (!is_callable($callback)) {
+            return null;
+        }
+
+        if ($this->zkClient->exists($path)) {
+            if (!isset($this->zkCallback[$path])) {
+                $this->zkCallback[$path] = array();
+            }
+            if (!in_array($callback, $this->zkCallback[$path])) {
+                $this->zkCallback[$path][] = $callback;
+
+                return $this->zkClient->get($path, array($this, 'watchCallback'));
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Wath event callback warper
+     * @param int    $eventType
+     * @param int    $stat
+     * @param string $path
+     * @return the return of the callback or null
+     */
+    protected function watchCallback($eventType, $stat, $path)
+    {
+        //TODO, eventType and stat do nothing.
+        if (!isset($this->zkCallback[$path])) {
+            return null;
+        }
+
+        foreach ($this->zkCallback[$path] as $callback) {
+            $this->zkClient->get($path, array($this, 'watchCallback'));
+
+            return call_user_func($callback);
+        }
+    }
+
+    /**
+     * Delete watch callback on a node, delete all callback when $callback is null
+     * @param string   $path
+     * @param callable $callback
+     * @return boolean|NULL
+     */
+    protected function cancelWatch($path, $callback = null)
+    {
+        if (isset($this->zkCallback[$path])) {
+            if (empty($callback)) {
+                unset($this->zkCallback[$path]);
+                $this->zkClient->get($path); //reset the callback
+
+                return true;
+            } else {
+                $key = array_search($callback, $this->zkCallback[$path]);
+
+                if ($key !== false) {
+                    unset($this->zkCallback[$path][$key]);
+
+                    return true;
+                }
+
+                return null;
+            }
+        }
+
+        return null;
+    }
 }

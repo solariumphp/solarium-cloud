@@ -36,17 +36,17 @@ namespace Solarium\Cloud\Core\Zookeeper;
 class ReplicaState extends AbstractState
 {
     /** @var  string Name of the replica */
-    protected $name;
+    protected $name = '';
     /** @var  string Name of the core */
-    protected $core;
+    protected $core = '';
     /** @var  string Base uri of shard replica */
-    protected $baseUri;
+    protected $baseUri = '';
     /** @var  string */
-    protected $nodeName;
+    protected $nodeName = '';
     /** @var  bool Whether or not this replica is a shard leader */
     protected $leader = false;
     /** @var  string Replica state, one of the following: active, down, recovering or recovery_failed */
-    protected $replicaState;
+    protected $state;
 
     /**
      * @var The replica is ready to receive updates and queries.
@@ -80,7 +80,7 @@ class ReplicaState extends AbstractState
      */
     public function getState(): string
     {
-        return $this->replicaState;
+        return $this->state;
     }
 
     /**
@@ -120,17 +120,24 @@ class ReplicaState extends AbstractState
      */
     public function isActive(): bool
     {
-        return $this->replicaState == self::ACTIVE;
+        return $this->state == self::ACTIVE;
     }
 
     protected function init()
     {
-        $this->name = key($this->state);
-        $state = reset($this->state);
-        $this->core = $this->getStateProp(ZkStateReader::CORE_NAME_PROP);
-        $this->baseUri = $this->getStateProp(ZkStateReader::BASE_URL_PROP);
-        $this->nodeName = $this->getStateProp(ZkStateReader::NODE_NAME_PROP);
+        $this->name = key($this->stateRaw);
+        $this->stateRaw = reset($this->stateRaw);
+        $this->core = $this->getStateProp(ZkStateReader::CORE_NAME_PROP, '');
+        $this->baseUri = $this->getStateProp(ZkStateReader::BASE_URL_PROP, '');
+        $this->nodeName = $this->getStateProp(ZkStateReader::NODE_NAME_PROP, '');
         $this->leader = $this->getStateProp(ZkStateReader::LEADER_PROP, false);
-        $this->replicaState = $this->getStateProp(ZkStateReader::STATE_PROP);
+
+        if (in_array($this->nodeName, $this->liveNodes)) {
+            $this->state = $this->getStateProp(ZkStateReader::STATE_PROP);
+        } else {
+            $this->state = ReplicaState::DOWN;
+        }
     }
+
+
 }

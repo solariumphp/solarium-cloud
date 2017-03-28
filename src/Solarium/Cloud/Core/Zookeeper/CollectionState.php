@@ -29,7 +29,6 @@
 
 namespace Solarium\Cloud\Core\Zookeeper;
 
-// TODO is not complete, add methods to get information from state and update state
 /**
  * Class for describing a SolrCloud collection endpoint.
  * @package Solarium\Cloud\Core\Client
@@ -62,7 +61,7 @@ class CollectionState extends AbstractState
      */
     public function __toString(): string
     {
-        $output = __CLASS__.'::__toString'."\n".print_r($this->state, true);
+        $output = __CLASS__.'::__toString'."\n".print_r($this->stateRaw, true);
 
         return $output;
     }
@@ -120,7 +119,9 @@ class CollectionState extends AbstractState
     {
         $leaders = array();
         foreach ($this->shards as $shardName => $shard) {
-            $leaders[$shardName] = $shard->getShardLeader();
+            if ($shard->getShardLeader() instanceof ReplicaState) {
+                $leaders[$shardName] = $shard->getShardLeader();
+            }
         }
 
         return $leaders;
@@ -135,7 +136,9 @@ class CollectionState extends AbstractState
         $uris = array();
 
         foreach ($this->getShards() as $shardName => $shard) {
-            $uris[$shardName] = $shard->getShardLeaderBaseUri();
+            if ($shard->getState() == ShardState::ACTIVE && !empty($shard->getShardLeaderBaseUri())) {
+                $uris[$shardName] = $shard->getShardLeaderBaseUri();
+            }
         }
 
         return $uris;
@@ -151,7 +154,9 @@ class CollectionState extends AbstractState
         $uris = array();
 
         foreach ($this->getShards() as $shard) {
-            $uris = array_merge($shard->getNodesBaseUris(), $uris);
+            if ($shard->getState() == ShardState::ACTIVE) {
+                $uris = array_merge($shard->getNodesBaseUris(), $uris);
+            }
         }
 
         return $uris;
@@ -160,11 +165,11 @@ class CollectionState extends AbstractState
     /**
      * Get state array without the collection name key
      *
-     * @return array
+     * @return mixed
      */
-    protected function getState(): array
+    protected function getState()
     {
-        return $this->state[$this->name];
+        return $this->stateRaw[$this->name];
     }
 
     /**
@@ -175,13 +180,13 @@ class CollectionState extends AbstractState
         // Clear shards first
         $this->shards = array();
         foreach ($this->getState()[ZkStateReader::SHARDS_PROP] as $shardName => $shardState) {
-            $this->shards[$shardName] = new ShardState(array($shardName => $shardState));
+            $this->shards[$shardName] = new ShardState(array($shardName => $shardState), $this->liveNodes);
         }
     }
 
     protected function init()
     {
-        $this->name = key($this->state);
+        $this->name = key($this->stateRaw);
         $this->setShards();
     }
 }

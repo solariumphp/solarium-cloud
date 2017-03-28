@@ -46,7 +46,7 @@ class ShardState extends AbstractState
     /** @var  string[] An array of all ids of the active replicas */
     protected $activeReplicas;
     /** @var  string Shard is active or inactive */
-    protected $shardState;
+    protected $state;
 
     /** @var The normal/default state of a shard. */
     const ACTIVE = 'active';
@@ -93,7 +93,7 @@ class ShardState extends AbstractState
      */
     public function getState(): string
     {
-        return $this->shardState;
+        return $this->state;
     }
 
     /**
@@ -107,21 +107,29 @@ class ShardState extends AbstractState
     }
 
     /**
-     * Returns a ReplicaState instance of the shard leader
+     * Returns a ReplicaState instance of the shard leader or null if no shard leader is active
      *
-     * @return ReplicaState
+     * @return ReplicaState|null
      */
-    public function getShardLeader(): ReplicaState
+    public function getShardLeader()//: ?ReplicaState // TODO can return null, wait for PHP 7.1 for this to work
     {
-        return $this->replicas[$this->shardLeader];
+        if (isset($this->replicas[$this->shardLeader]) && $this->replicas[$this->shardLeader]->isActive()) {
+            return $this->replicas[$this->shardLeader];
+        }
+
+        return null;
     }
 
     /**
      * @return string
      */
-    public function getShardLeaderBaseUri(): string
+    public function getShardLeaderBaseUri()//: ?string // TODO wait for PHP 7.1 to support this
     {
-        return $this->getShardLeader()->getBaseUri();
+        if ($this->getShardLeader() instanceof ReplicaState) {
+            return $this->getShardLeader()->getBaseUri();
+        }
+
+        return null;
     }
 
     /**
@@ -133,7 +141,9 @@ class ShardState extends AbstractState
     {
         $uris = array();
         foreach ($this->getReplicas() as $replica) {
-            $uris[$replica->getNodeName()] = $replica->getBaseUri();
+            if ($replica->getState() == ReplicaState::ACTIVE) {
+                $uris[$replica->getNodeName()] = $replica->getBaseUri();
+            }
         }
 
         return $uris;
@@ -156,14 +166,17 @@ class ShardState extends AbstractState
 
     protected function init()
     {
-        $this->name = key($this->state);
+        $this->name = key($this->stateRaw);
+        $this->stateRaw = reset($this->stateRaw);
         $this->range = $this->getStateProp(ZkStateReader::RANGE_PROP);
+        $this->state = $this->getStateProp(ZkStateReader::STATE_PROP);
+
         $replicas = $this->getStateProp(ZkStateReader::REPLICAS_PROP);
         // Reset replicas property
         $this->replicas = array();
 
         foreach ($replicas as $replicaName => $replica) {
-            $this->replicas[$replicaName] = new ReplicaState(array($replicaName => $replica));
+            $this->replicas[$replicaName] = new ReplicaState(array($replicaName => $replica), $this->liveNodes);
             if ($this->replicas[$replicaName]->isLeader()) {
                 $this->shardLeader = $replicaName;
             }
