@@ -56,7 +56,6 @@ use Solarium\Cloud\Core\Event\PreExecuteRequest as PreExecuteRequestEvent;
 use Solarium\Cloud\Core\Event\PostExecuteRequest as PostExecuteRequestEvent;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
-
 /**
  * Cloud interface for interaction with SolrCloud.
  *
@@ -563,9 +562,9 @@ class CloudClient extends Configurable implements CloudClientInterface
      * or a manual require.
      *
      * @throws InvalidArgumentException
-     * @param  string $key
+     * @param  string                 $key
      * @param  string|PluginInterface $plugin
-     * @param  array $options
+     * @param  array                  $options
      * @return self                     Provides fluent interface
      */
     public function registerPlugin($key, $plugin, $options = array())
@@ -705,7 +704,7 @@ class CloudClient extends Configurable implements CloudClientInterface
      *
      * @throws UnexpectedValueException;
      * @param  QueryInterface $query
-     * @param  array Response            $response
+     * @param  array Response $response
      * @return ResultInterface
      */
     public function createResult(QueryInterface $query, \Solarium\Core\Client\Response $response): ResultInterface
@@ -976,7 +975,7 @@ class CloudClient extends Configurable implements CloudClientInterface
      *
      * @return \Solarium\QueryType\Ping\Query
      */
-    public function createAdmin($options = null): \Solarium\QueryType\Admin\Query
+    public function createAdmin($options = null)//: \Solarium\QueryType\Admin\Query //TODO does not exist yet
     {
         return $this->createQuery(self::QUERY_PING, $options);
     }

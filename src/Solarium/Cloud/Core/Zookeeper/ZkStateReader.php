@@ -36,6 +36,10 @@ use Solarium\Cloud\Exception\ZookeeperException;
 use Symfony\Component\Cache\Adapter\AdapterInterface;
 use Zookeeper;
 
+/**
+ * Class ZkStateReader
+ * @package Solarium\Cloud\Core\Zookeeper
+ */
 class ZkStateReader
 {
     const BASE_URL_PROP = 'base_url';
@@ -322,30 +326,30 @@ class ZkStateReader
         }
 
         //TODO it would be great to have the CollectionEndpoint update when the state is updated
-        $endpoint = new CollectionEndpoint($state);
+        $endpoint = new CollectionEndpoint($collection, $this);
 
         return $endpoint;
     }
 
     /**
      * Returns the official collection name
-     * @param  string $name Collection name
+     * @param  string $collection Collection name
      * @return string Name of the collection
      * @throws ZookeeperException
      */
-    public function getCollectionName(string $name): string
+    public function getCollectionName(string $collection): string
     {
-        if (array_search($name, $this->collections) === false) {
+        if (array_search($collection, $this->collections) === false) {
             $aliases = $this->getCollectionAliases();
             if (!empty($aliases)) {
-                if (array_key_exists($name, $aliases)) {
-                    return $aliases[$name];
+                if (array_key_exists($collection, $aliases)) {
+                    return $aliases[$collection];
                 }
             }
         } else {
-            return $name;
+            return $collection;
         }
-        throw new ZookeeperException("Collection '$name' not found.");
+        throw new ZookeeperException("Collection '$collection' not found.");
     }
 
     /**
@@ -550,6 +554,8 @@ class ZkStateReader
 
             return call_user_func($callback);
         }
+
+        return null;
     }
 
     /**

@@ -30,10 +30,10 @@
 namespace Solarium\Cloud\Core\Client;
 
 use Solarium\Cloud\Core\Zookeeper\CollectionState;
+use Solarium\Cloud\Core\Zookeeper\ZkStateReader;
 use Solarium\Cloud\Exception\ZookeeperException;
 use Solarium\Core\Client\AbstractEndpoint;
 use Solarium\Core\Configurable;
-
 
 // TODO Add a way to set select or update type, this will choose shard leaders or any of the nodes
 // TODO Load balancing in the Endpoint?
@@ -46,14 +46,10 @@ class CollectionEndpoint extends Configurable // TODO implements EndpointInterfa
     /** @var  */
     //protected $type = AbstractEndpoint::SOLRCLOUD;
     /** @var  string Name of the collection */
-    protected $name;
-    /** @var  CollectionState Collection state retrieved from ZkStateReader */
-    protected $state;
+    protected $collection;
 
-    /** @var  string[]  */
-    protected $leaderBaseUris;
-    /** @var  string[]  */
-    protected $nodesBaseUris;
+    /** @var  ZkStateReader */
+    protected $zkStateReader;
 
     /** @var  string */
     protected $scheme;
@@ -66,12 +62,14 @@ class CollectionEndpoint extends Configurable // TODO implements EndpointInterfa
 
     /**
      * CollectionEndpoint constructor.
-     * @param CollectionState    $state   The collection state returned by ZkStateReader
+     * @param string             $collection
+     * @param ZkStateReader      $zkStateReader
      * @param array|\Zend_Config $options
      */
-    public function __construct(CollectionState &$state, array $options = null)
+    public function __construct(string $collection, ZkStateReader &$zkStateReader, array $options = null)
     {
-        $this->state = $state;
+        $this->collection = $collection;
+        $this->zkStateReader = $zkStateReader;
         parent::__construct($options);
     }
 
@@ -107,16 +105,6 @@ class CollectionEndpoint extends Configurable // TODO implements EndpointInterfa
     }
 
     /**
-     * Name of the collection.
-     *
-     * @return string
-     */
-    public function getCollection()
-    {
-        return $this->name;
-    }
-
-    /**
      * Get host option.
      *
      * @return string
@@ -131,9 +119,9 @@ class CollectionEndpoint extends Configurable // TODO implements EndpointInterfa
      *
      * @return string
      */
-    public function getName(): string
+    public function getCollection(): string
     {
-        return $this->name;
+        return $this->collection;
     }
 
     /**
@@ -175,7 +163,7 @@ class CollectionEndpoint extends Configurable // TODO implements EndpointInterfa
      */
     public function getBaseUri(): string
     {
-        $uri = $this->getServerUri().$this->getCollection().'/';
+        $uri = $this->getServerUri().$this->zkStateReader->getCollectionName($this->collection).'/';
 
         return $uri;
     }
@@ -205,7 +193,7 @@ class CollectionEndpoint extends Configurable // TODO implements EndpointInterfa
      *
      * @param int $timeout
      *
-     * @return self Provides fluent interface
+     * @return CollectionEndpoint Provides fluent interface
      */
     public function setTimeout($timeout)
     {
@@ -232,23 +220,21 @@ class CollectionEndpoint extends Configurable // TODO implements EndpointInterfa
      */
     protected function getCollectionState(): CollectionState
     {
-        return $this->state;
+        return $this->zkStateReader->getCollectionState($this->collection);
     }
 
     /**
      *
      */
-    protected function setRandomNodeBaseUri()
+    protected function randomNodeBaseUri()
     {
-        if (!empty($this->nodesBaseUris)) {
-            shuffle($this->nodesBaseUris);
-            $randomUri = reset($this->nodesBaseUris);
-            $parseUri = parse_url($randomUri);
-            $this->scheme = $parseUri['scheme'];
-            $this->host = $parseUri['host'];
-            $this->port = $parseUri['port'];
-            $this->path = $parseUri['path'];
-        }
+        $nodesBaseUris = $this->zkStateReader->getCollectionState($this->collection)->getNodesBaseUris();
+        shuffle($nodesBaseUris);
+        $parseUri = parse_url(reset($nodesBaseUris));
+        $this->scheme = $parseUri['scheme'];
+        $this->host = $parseUri['host'];
+        $this->port = $parseUri['port'];
+        $this->path = $parseUri['path'];
     }
 
     /**
@@ -260,10 +246,6 @@ class CollectionEndpoint extends Configurable // TODO implements EndpointInterfa
      */
     protected function init()
     {
-        $this->getCollectionState();
-        $this->name = $this->state->getName();
-        $this->leaderBaseUris = $this->state->getShardLeadersBaseUris();
-        $this->nodesBaseUris = $this->state->getNodesBaseUris();
-        $this->setRandomNodeBaseUri();
+        $this->randomNodeBaseUri();
     }
 }

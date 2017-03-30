@@ -127,6 +127,7 @@ class ReplicaState extends AbstractState
     {
         $this->name = key($this->stateRaw);
         $this->stateRaw = reset($this->stateRaw);
+
         $this->core = $this->getStateProp(ZkStateReader::CORE_NAME_PROP, '');
         $this->baseUri = $this->getStateProp(ZkStateReader::BASE_URL_PROP, '');
         $this->nodeName = $this->getStateProp(ZkStateReader::NODE_NAME_PROP, '');
@@ -138,6 +139,4 @@ class ReplicaState extends AbstractState
             $this->state = ReplicaState::DOWN;
         }
     }
-
-
 }

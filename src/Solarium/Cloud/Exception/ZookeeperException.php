@@ -37,5 +37,4 @@ use Solarium\Exception\ExceptionInterface;
  */
 class ZookeeperException extends \Exception implements ExceptionInterface
 {
-
 }

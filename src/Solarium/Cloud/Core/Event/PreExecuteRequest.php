@@ -57,7 +57,7 @@ class PreExecuteRequest extends Event
     /**
      * Event constructor.
      *
-     * @param Request  $request
+     * @param Request            $request
      * @param CollectionEndpoint $endpoint
      */
     public function __construct(Request $request, CollectionEndpoint $endpoint)

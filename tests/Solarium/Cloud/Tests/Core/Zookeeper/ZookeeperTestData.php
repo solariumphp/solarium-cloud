@@ -1,8 +1,9 @@
 <?php
+
 /**
  * BSD 2-Clause License
  *
- * Copyright (c) 2017 Jeroen Steggink, Bas de Nooijer
+ * Copyright (c) 2017 Jeroen Steggink
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,37 +28,39 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-namespace Solarium\Cloud\Core\Client\Adapter;
-
-use Solarium\Core\ConfigurableInterface;
-use Solarium\Core\Client\Request;
-use Solarium\Core\Client\Response;
-use Solarium\Cloud\Core\Client\CollectionEndpoint;
-
 /**
- * Interface for client adapters.
- *
- * The goal of an adapter is to accept a query, execute it and return the right
- * result object. This is actually quite a complex task as it involves the
- * handling of all Solr communication.
- *
- * The adapter structure allows for varying implementations of this task.
- *
- * Most adapters will use some sort of HTTP client. In that case the
- * query request builders and query response parsers can be used to simplify
- * HTTP communication.
- *
- * However an adapter may also implement all logic by itself if needed.
+ * Class ZookeeperTestData
  */
-interface AdapterInterface extends ConfigurableInterface
+class ZookeeperTestData
 {
-    /**
-     * Execute a request.
-     *
-     * @param Request            $request
-     * @param CollectionEndpoint $endpoint
-     *
-     * @return Response
-     */
-    public function execute($request, $endpoint);
+
+    const TESTDATA1 = '{"collection1":{
+    "replicationFactor":"1",
+    "shards":{
+      "shard1":{
+        "range":"0-7fffffff",
+        "state":"active",
+        "replicas":{
+          "core_node1":{
+            "core":"collection1_shard1_replica1",
+            "base_url":"http://localhost:8983/solr",
+            "node_name":"localhost:8983_solr",
+            "state":"active",
+            "leader":"true"}}},
+      "shard2":{
+        "range":"80000000-ffffffff",
+        "state":"active",
+        "replicas":{
+          "core_node3":{
+            "core":"collection1_shard1_replica2",
+            "base_url":"http://localhost:8984/solr",
+            "node_name":"localhost:8984_solr",
+            "state":"active",
+            "leader":"true"}}}},
+    "router":{"name":"compositeId"},
+    "maxShardsPerNode":"1",
+    "autoAddReplicas":"false"}}';
+
 }
+
+

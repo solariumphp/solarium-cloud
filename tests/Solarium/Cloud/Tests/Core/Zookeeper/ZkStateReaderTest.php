@@ -51,37 +51,37 @@ class ZkStateReaderTest extends TestCase
 
     public function testReadCollectionAliases() {
         $collectionAliases = $this->zkStateReader->getCollectionAliases();
-        print_r($collectionAliases);
+        //print_r($collectionAliases);
         //$this->assertEquals('collection1', $configName);
     }
 
     public function testReadCollectionList() {
         $collectionList = $this->zkStateReader->getCollectionList();
-        print_r($collectionList);
+        //print_r($collectionList);
         //$this->assertEquals('collection1', $configName);
     }
 
     public function testReadCollectionState() {
         $collectionStates = $this->zkStateReader->getCollectionState('collection1');
-        print_r($collectionStates);
+        //print_r($collectionStates);
         //$this->assertEquals('collection1', $configName);
     }
 
     public function testReadClusterState() {
         $clusterState = $this->zkStateReader->getClusterState();
-        print_r($clusterState);
+        //print_r($clusterState);
         //$this->assertEquals('collection1', $configName);
     }
 
     public function testReadClusterProperties() {
         $clusterProperties = $this->zkStateReader->getClusterProperties();
-        print_r($clusterProperties);
+        //print_r($clusterProperties);
         //$this->assertEquals('collection1', );
     }
 
     public function testReadLiveNodes() {
         $liveNodes = $this->zkStateReader->getLiveNodes();
-        print_r($liveNodes);
+        //print_r($liveNodes);
         //$this->assertEquals('collection1', );
     }
 
@@ -92,17 +92,10 @@ class ZkStateReaderTest extends TestCase
         $this->assertEquals('collection1', $configName);
     }
 
-    public function testActiveCollectionBaseUrls() {
-        $activeCollectionBaseUrls = $this->zkStateReader->getActiveBaseUrls('collection1');
-        //$this->assertEquals(, $activeCollectionEndpoints);
-        print_r($activeCollectionBaseUrls);
-    }
-
     public function testCollectionEndpoint() {
         $endpoints = $this->zkStateReader->getCollectionEndpoint('collection1');
-        print_r($endpoints);
+        //print_r($endpoints);
     }
-
 
     protected function tearDown()
     {

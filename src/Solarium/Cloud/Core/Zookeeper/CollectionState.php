@@ -29,6 +29,8 @@
 
 namespace Solarium\Cloud\Core\Zookeeper;
 
+use Solarium\Cloud\Exception\ZookeeperException;
+
 /**
  * Class for describing a SolrCloud collection endpoint.
  * @package Solarium\Cloud\Core\Client
@@ -148,6 +150,7 @@ class CollectionState extends AbstractState
      * Array with node names as keys and base URIs as values.
      *
      * @return string[]
+     * @throws ZookeeperException
      */
     public function getNodesBaseUris(): array
     {
@@ -157,6 +160,10 @@ class CollectionState extends AbstractState
             if ($shard->getState() == ShardState::ACTIVE) {
                 $uris = array_merge($shard->getNodesBaseUris(), $uris);
             }
+        }
+
+        if (empty($uris)) {
+            throw new ZookeeperException("No Solr nodes are available for this collection.");
         }
 
         return $uris;

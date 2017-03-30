@@ -2,7 +2,7 @@
 /**
  * BSD 2-Clause License
  *
- * Copyright (c) 2017 Jeroen Steggink, Bas de Nooijer
+ * Copyright (c) 2017 Jeroen Steggink
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,37 +27,15 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-namespace Solarium\Cloud\Core\Client\Adapter;
+namespace Solarium\Cloud\Tests\Core\Client;
 
-use Solarium\Core\ConfigurableInterface;
-use Solarium\Core\Client\Request;
-use Solarium\Core\Client\Response;
-use Solarium\Cloud\Core\Client\CollectionEndpoint;
+use PHPUnit\Framework\TestCase;
 
 /**
- * Interface for client adapters.
- *
- * The goal of an adapter is to accept a query, execute it and return the right
- * result object. This is actually quite a complex task as it involves the
- * handling of all Solr communication.
- *
- * The adapter structure allows for varying implementations of this task.
- *
- * Most adapters will use some sort of HTTP client. In that case the
- * query request builders and query response parsers can be used to simplify
- * HTTP communication.
- *
- * However an adapter may also implement all logic by itself if needed.
+ * Class CollectionEndpointTest
+ * @package Solarium\Cloud\Tests\Core\Client
  */
-interface AdapterInterface extends ConfigurableInterface
+class CollectionEndpointTest extends TestCase
 {
-    /**
-     * Execute a request.
-     *
-     * @param Request            $request
-     * @param CollectionEndpoint $endpoint
-     *
-     * @return Response
-     */
-    public function execute($request, $endpoint);
+
 }

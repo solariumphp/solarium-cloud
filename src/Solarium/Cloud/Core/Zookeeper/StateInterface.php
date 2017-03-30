@@ -48,5 +48,4 @@ interface StateInterface
      * @return mixed
      */
     public function getStateProp(string $name, $defaultValue = null);
-
 }

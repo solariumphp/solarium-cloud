@@ -51,5 +51,4 @@ class Events extends \Solarium\Core\Event\Events
      * @var string
      */
     const POST_EXECUTE_REQUEST = 'solarium-cloud.core.postExecuteRequest';
-
 }

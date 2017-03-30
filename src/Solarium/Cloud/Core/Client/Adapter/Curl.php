@@ -48,7 +48,7 @@ class Curl extends Configurable implements AdapterInterface
     /**
      * Execute a Solr request using the cURL Http.
      *
-     * @param Request  $request
+     * @param Request            $request
      * @param CollectionEndpoint $endpoint
      *
      * @return Response

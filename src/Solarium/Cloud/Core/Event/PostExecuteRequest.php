@@ -57,9 +57,9 @@ class PostExecuteRequest extends Event
     /**
      * Event constructor.
      *
-     * @param Request       $request
+     * @param Request            $request
      * @param CollectionEndpoint $endpoint
-     * @param Response      $response
+     * @param Response           $response
      */
     public function __construct(Request $request, CollectionEndpoint $endpoint, Response $response)
     {
