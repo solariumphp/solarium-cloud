@@ -1226,7 +1226,7 @@ class CloudClient extends Configurable implements CloudClientInterface
             }
         }
 
-        $this->zkClient = new Zookeeper($this->zkHosts, $this->zkTimeout);
+        $this->zkClient = new Zookeeper($this->zkHosts, null, $this->zkTimeout);
         $this->zkStateReader = new ZkStateReader($this->zkClient);
     }
 
