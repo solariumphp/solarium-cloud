@@ -218,15 +218,15 @@ interface CloudClientInterface
      * @param  string $queryClass
      * @return CloudClientInterface   Provides fluent interface
      */
-    public function registerQueryType($type, $queryClass);
+    public function registerQueryType($type, $queryClass): CloudClientInterface;
 
     /**
      * Register multiple querytypes
      *
      * @param  array $queryTypes
-     * @return CloudClientInterface  Provides fluent interface
+     * @return CloudClientInterface Provides fluent interface
      */
-    public function registerQueryTypes($queryTypes);
+    public function registerQueryTypes($queryTypes): CloudClientInterface;
 
     /**
      * Get all registered querytypes
@@ -264,7 +264,7 @@ interface CloudClientInterface
      * @param  array                  $options
      * @return CloudClientInterface Provides fluent interface
      */
-    public function registerPlugin($key, $plugin, $options = array());
+    public function registerPlugin($key, $plugin, array $options = array()): CloudClientInterface;
 
     /**
      * Register multiple plugins
@@ -272,7 +272,7 @@ interface CloudClientInterface
      * @param  array $plugins
      * @return CloudClientInterface Provides fluent interface
      */
-    public function registerPlugins($plugins);
+    public function registerPlugins($plugins): CloudClientInterface;
 
     /**
      * Get all registered plugins
@@ -297,9 +297,9 @@ interface CloudClientInterface
      * You can remove a plugin by passing the plugin key, or the plugin instance
      *
      * @param  string|PluginInterface $plugin
-     * @return ClientInterface        Provides fluent interface
+     * @return CloudClientInterface        Provides fluent interface
      */
-    public function removePlugin($plugin);
+    public function removePlugin($plugin): CloudClientInterface;
 
     /**
      * Creates a request based on a query instance

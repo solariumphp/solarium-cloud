@@ -133,7 +133,7 @@ class ReplicaState extends AbstractState
         $this->nodeName = $this->getStateProp(ZkStateReader::NODE_NAME_PROP, '');
         $this->leader = $this->getStateProp(ZkStateReader::LEADER_PROP, false);
 
-        if (in_array($this->nodeName, $this->liveNodes)) {
+        if (in_array($this->nodeName, $this->liveNodes, true)) {
             $this->state = $this->getStateProp(ZkStateReader::STATE_PROP);
         } else {
             $this->state = ReplicaState::DOWN;

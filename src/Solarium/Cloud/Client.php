@@ -29,7 +29,7 @@
 
 namespace Solarium\Cloud;
 
-use Solarium\Cloud\Core\Client\CloudClient as CloudClient;
+use Solarium\Cloud\Core\Client\CloudClient;
 
 /**
  * This class makes the client easier to use (shorter class name) and adds
@@ -91,9 +91,9 @@ class Client extends CloudClient
      *
      * @return boolean
      */
-    public static function checkExact($version)
+    public static function checkExact($version): bool
     {
-        return (substr(self::VERSION, 0, strlen($version)) == $version);
+        return (strpos(self::VERSION, $version) === 0);
     }
 
     /**
@@ -119,7 +119,7 @@ class Client extends CloudClient
      *
      * @return boolean
      */
-    public static function checkMinimal($version)
+    public static function checkMinimal($version): bool
     {
         return version_compare(self::VERSION, $version, '>=');
     }

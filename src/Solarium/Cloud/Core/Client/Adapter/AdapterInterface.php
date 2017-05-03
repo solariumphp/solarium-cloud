@@ -59,5 +59,5 @@ interface AdapterInterface extends ConfigurableInterface
      *
      * @return Response
      */
-    public function execute($request, $endpoint);
+    public function execute($request, $endpoint): \Solarium\Core\Client\Response;
 }

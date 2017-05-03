@@ -71,7 +71,7 @@ class PreExecuteRequest extends Event
      *
      * @return CollectionEndpoint
      */
-    public function getEndpoint()
+    public function getEndpoint(): \Solarium\Cloud\Core\Client\CollectionEndpoint
     {
         return $this->endpoint;
     }
@@ -81,7 +81,7 @@ class PreExecuteRequest extends Event
      *
      * @return Request
      */
-    public function getRequest()
+    public function getRequest(): \Solarium\Core\Client\Request
     {
         return $this->request;
     }
@@ -101,7 +101,7 @@ class PreExecuteRequest extends Event
      *
      * @return Response
      */
-    public function getResponse()
+    public function getResponse(): \Solarium\Core\Client\Response
     {
         return $this->response;
     }

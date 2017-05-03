@@ -48,12 +48,14 @@ class Curl extends Configurable implements AdapterInterface
     /**
      * Execute a Solr request using the cURL Http.
      *
-     * @param Request            $request
+     * @param Request $request
      * @param CollectionEndpoint $endpoint
      *
      * @return Response
+     * @throws \Solarium\Exception\HttpException
+     * @throws \Solarium\Exception\InvalidArgumentException
      */
-    public function execute($request, $endpoint)
+    public function execute($request, $endpoint): \Solarium\Core\Client\Response
     {
         return $this->getData($request, $endpoint);
     }
@@ -65,8 +67,9 @@ class Curl extends Configurable implements AdapterInterface
      * @param string   $httpResponse
      *
      * @return Response
+     * @throws \Solarium\Exception\HttpException
      */
-    public function getResponse($handle, $httpResponse)
+    public function getResponse($handle, $httpResponse): \Solarium\Core\Client\Response
     {
         // @codeCoverageIgnoreStart
         if ($httpResponse !== false && $httpResponse !== null) {
@@ -139,7 +142,7 @@ class Curl extends Configurable implements AdapterInterface
         if (count($options['headers'])) {
             $headers = array();
             foreach ($options['headers'] as $key => $value) {
-                $headers[] = $key.": ".$value;
+                $headers[] = $key.': '.$value;
             }
             curl_setopt($handler, CURLOPT_HTTPHEADER, $headers);
         }
@@ -190,12 +193,14 @@ class Curl extends Configurable implements AdapterInterface
     /**
      * Execute request.
      *
-     * @param Request  $request
+     * @param Request            $request
      * @param CollectionEndpoint $endpoint
      *
      * @return Response
+     * @throws \Solarium\Exception\HttpException
+     * @throws \Solarium\Exception\InvalidArgumentException
      */
-    protected function getData($request, $endpoint)
+    protected function getData($request, $endpoint): \Solarium\Core\Client\Response
     {
         // @codeCoverageIgnoreStart
         $handle = $this->createHandle($request, $endpoint);
@@ -226,12 +231,12 @@ class Curl extends Configurable implements AdapterInterface
     /**
      * Create http request options from request.
      *
-     * @param Request  $request
+     * @param Request            $request
      * @param CollectionEndpoint $endpoint
      *
      * @return array
      */
-    protected function createOptions($request, $endpoint)
+    protected function createOptions($request, $endpoint): array
     {
         // @codeCoverageIgnoreStart
         $options = array(

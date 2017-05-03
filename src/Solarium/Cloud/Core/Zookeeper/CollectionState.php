@@ -63,9 +63,7 @@ class CollectionState extends AbstractState
      */
     public function __toString(): string
     {
-        $output = __CLASS__.'::__toString'."\n".print_r($this->stateRaw, true);
-
-        return $output;
+        return __CLASS__.'::__toString'."\n".print_r($this->stateRaw, true);
     }
 
     /**
@@ -163,7 +161,7 @@ class CollectionState extends AbstractState
         }
 
         if (empty($uris)) {
-            throw new ZookeeperException("No Solr nodes are available for this collection.");
+            throw new ZookeeperException('No Solr nodes are available for this collection.');
         }
 
         return $uris;

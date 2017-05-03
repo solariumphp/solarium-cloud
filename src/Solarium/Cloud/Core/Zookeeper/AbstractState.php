@@ -64,7 +64,7 @@ abstract class AbstractState implements StateInterface
     /**
      * @param string     $name
      * @param mixed|null $defaultValue
-     * @return array
+     * @return mixed
      */
     public function getStateProp(string $name, $defaultValue = null)
     {

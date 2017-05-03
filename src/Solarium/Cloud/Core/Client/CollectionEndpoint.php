@@ -65,8 +65,9 @@ class CollectionEndpoint extends Configurable // TODO implements EndpointInterfa
      * @param string             $collection
      * @param ZkStateReader      $zkStateReader
      * @param array|\Zend_Config $options
+     * @throws \Solarium\Exception\InvalidArgumentException
      */
-    public function __construct(string $collection, ZkStateReader &$zkStateReader, array $options = null)
+    public function __construct(string $collection, ZkStateReader $zkStateReader, array $options = null)
     {
         $this->collection = $collection;
         $this->zkStateReader = $zkStateReader;
@@ -83,7 +84,7 @@ class CollectionEndpoint extends Configurable // TODO implements EndpointInterfa
      *
      * @return self Provides fluent interface
      */
-    public function setAuthentication($username, $password)
+    public function setAuthentication($username, $password): CollectionEndpoint
     {
         $this->setOption('username', $username);
         $this->setOption('password', $password);
@@ -96,7 +97,7 @@ class CollectionEndpoint extends Configurable // TODO implements EndpointInterfa
      *
      * @return array
      */
-    public function getAuthentication()
+    public function getAuthentication(): array
     {
         return array(
             'username' => $this->getOption('username'),
@@ -109,7 +110,7 @@ class CollectionEndpoint extends Configurable // TODO implements EndpointInterfa
      *
      * @return string
      */
-    public function getHost()
+    public function getHost(): string
     {
         return $this->host;
     }
@@ -129,7 +130,7 @@ class CollectionEndpoint extends Configurable // TODO implements EndpointInterfa
      *
      * @return string
      */
-    public function getPath()
+    public function getPath(): string
     {
         return $this->path;
     }
@@ -139,7 +140,7 @@ class CollectionEndpoint extends Configurable // TODO implements EndpointInterfa
      *
      * @return int
      */
-    public function getPort()
+    public function getPort(): int
     {
         return $this->port;
     }
@@ -149,7 +150,7 @@ class CollectionEndpoint extends Configurable // TODO implements EndpointInterfa
      *
      * @return string
      */
-    public function getScheme()
+    public function getScheme(): string
     {
         return $this->scheme;
     }
@@ -163,9 +164,7 @@ class CollectionEndpoint extends Configurable // TODO implements EndpointInterfa
      */
     public function getBaseUri(): string
     {
-        $uri = $this->getServerUri().$this->zkStateReader->getCollectionName($this->collection).'/';
-
-        return $uri;
+        return $this->getServerUri().$this->getCollection().'/';
     }
 
     /**
@@ -183,7 +182,7 @@ class CollectionEndpoint extends Configurable // TODO implements EndpointInterfa
      *
      * @return string
      */
-    public function getTimeout()
+    public function getTimeout(): string
     {
         return $this->getOption('timeout');
     }
@@ -193,9 +192,9 @@ class CollectionEndpoint extends Configurable // TODO implements EndpointInterfa
      *
      * @param int $timeout
      *
-     * @return CollectionEndpoint Provides fluent interface
+     * @return Configurable Provides fluent interface
      */
-    public function setTimeout($timeout)
+    public function setTimeout($timeout): Configurable
     {
         return $this->setOption('timeout', $timeout);
     }
@@ -210,13 +209,12 @@ class CollectionEndpoint extends Configurable // TODO implements EndpointInterfa
      */
     public function __toString()
     {
-        $output = __CLASS__.'::__toString'."\n".'base uri: '.$this->getBaseUri()."\n".'host: '.$this->getHost()."\n".'port: '.$this->getPort()."\n".'path: '.$this->getPath()."\n".'collection: '.$this->getCore()."\n".'timeout: '.$this->getTimeout()."\n".'authentication: '.print_r($this->getAuthentication(), 1);
-
-        return $output;
+        return __CLASS__.'::__toString'."\n".'base uri: '.$this->getBaseUri()."\n".'host: '.$this->getHost()."\n".'port: '.$this->getPort()."\n".'path: '.$this->getPath()."\n".'collection: '.$this->getCollection()."\n".'timeout: '.$this->getTimeout()."\n".'authentication: '.print_r($this->getAuthentication(), 1);
     }
 
     /**
      * @return CollectionState
+     * @throws \Solarium\Cloud\Exception\ZookeeperException
      */
     protected function getCollectionState(): CollectionState
     {
@@ -225,6 +223,7 @@ class CollectionEndpoint extends Configurable // TODO implements EndpointInterfa
 
     /**
      *
+     * @throws \Solarium\Cloud\Exception\ZookeeperException
      */
     protected function randomNodeBaseUri()
     {
@@ -243,6 +242,7 @@ class CollectionEndpoint extends Configurable // TODO implements EndpointInterfa
      * In this case the path needs to be cleaned of trailing slashes.
      *
      * @see setPath()
+     * @throws \Solarium\Cloud\Exception\ZookeeperException
      */
     protected function init()
     {

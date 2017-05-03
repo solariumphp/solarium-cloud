@@ -121,14 +121,15 @@ class ShardState extends AbstractState
     }
 
     /**
-     * @return string
+     * @return string|null
      */
     public function getShardLeaderBaseUri()//: ?string // TODO wait for PHP 7.1 to support this
+    : string
     {
         if ($this->getShardLeader() instanceof ReplicaState) {
             return $this->getShardLeader()->getBaseUri();
         }
-
+        //TODO instead of returning null, it might be better to throw an exception if this shouldn't happen at all
         return null;
     }
 
