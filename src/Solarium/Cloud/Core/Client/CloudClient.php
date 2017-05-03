@@ -56,12 +56,6 @@ use Solarium\Cloud\Core\Event\PreExecuteRequest as PreExecuteRequestEvent;
 use Solarium\Cloud\Core\Event\PostExecuteRequest as PostExecuteRequestEvent;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use \Zookeeper;
-use Solarium\Plugin\MinimumScoreFilter\MinimumScoreFilter;
-use Solarium\Plugin\CustomizeRequest\CustomizeRequest;
-use Solarium\Plugin\PostBigRequest;
-use Solarium\QueryType\RealtimeGet\Query;
-use Solarium\QueryType\Analysis\Query\Field;
-use Solarium\QueryType\Analysis\Query\Document;
 
 /**
  * Cloud interface for interaction with SolrCloud.
@@ -140,7 +134,7 @@ class CloudClient extends Configurable implements CloudClientInterface
      * @var array
      */
     protected $options = array(
-        'adapter' => \Solarium\Cloud\Core\Client\Adapter\Curl::class,
+        'adapter' => '\Solarium\Cloud\Core\Client\Adapter\Curl',
     );
 
     /**
@@ -149,16 +143,16 @@ class CloudClient extends Configurable implements CloudClientInterface
      * These can be customized using {@link registerQueryType()}
      */
     protected static $queryTypes = array(
-        self::QUERY_SELECT => \Solarium\QueryType\Select\Query\Query::class,
-        self::QUERY_UPDATE => \Solarium\QueryType\Update\Query\Query::class,
-        self::QUERY_PING => \Solarium\QueryType\Ping\Query::class,
-        self::QUERY_MORELIKETHIS => \Solarium\QueryType\MoreLikeThis\Query::class,
-        self::QUERY_ANALYSIS_DOCUMENT => Document::class,
-        self::QUERY_ANALYSIS_FIELD => Field::class,
-        self::QUERY_TERMS => \Solarium\QueryType\Terms\Query::class,
-        self::QUERY_SUGGESTER => \Solarium\QueryType\Suggester\Query::class,
-        self::QUERY_EXTRACT => \Solarium\QueryType\Extract\Query::class,
-        self::QUERY_REALTIME_GET => Query::class,
+        self::QUERY_SELECT => '\Solarium\QueryType\Select\Query\Query',
+        self::QUERY_UPDATE => '\Solarium\QueryType\Update\Query\Query',
+        self::QUERY_PING => '\Solarium\QueryType\Ping\Query',
+        self::QUERY_MORELIKETHIS => '\Solarium\QueryType\MoreLikeThis\Query',
+        self::QUERY_ANALYSIS_DOCUMENT => 'Solarium\QueryType\Analysis\Query\Document',
+        self::QUERY_ANALYSIS_FIELD => 'Solarium\QueryType\Analysis\Query\Field',
+        self::QUERY_TERMS => '\Solarium\QueryType\Terms\Query',
+        self::QUERY_SUGGESTER => '\Solarium\QueryType\Suggester\Query',
+        self::QUERY_EXTRACT => 'Solarium\QueryType\Extract\Query',
+        self::QUERY_REALTIME_GET => 'Solarium\QueryType\RealtimeGet\Query',
         /* TODO
         self::QUERY_ADMIN_CORES => 'Solarium\Cloud\QueryType\Admin\Cores',
         self::QUERY_ADMIN_COLLECTIONS => 'Solarium\Cloud\QueryType\Admin\Collections',
@@ -177,12 +171,12 @@ class CloudClient extends Configurable implements CloudClientInterface
      * @var array
      */
     protected static $pluginTypes = array(
-        'postbigrequest' => PostBigRequest::class,
-        'customizerequest' => CustomizeRequest::class,
+        'postbigrequest' => 'Solarium\Plugin\PostBigRequest',
+        'customizerequest' => 'Solarium\Plugin\CustomizeRequest\CustomizeRequest',
         // TODO //'parallelexecution' => 'Solarium\Plugin\ParallelExecution\ParallelExecution',
         // TODO //'bufferedadd' => 'Solarium\Plugin\BufferedAdd\BufferedAdd',
         // TODO //'prefetchiterator' => 'Solarium\Plugin\PrefetchIterator',
-        'minimumscorefilter' => MinimumScoreFilter::class,
+        'minimumscorefilter' => 'Solarium\Plugin\MinimumScoreFilter\MinimumScoreFilter',
     );
 
     /**
