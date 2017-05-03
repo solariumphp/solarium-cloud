@@ -27,78 +27,53 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-namespace Solarium\Cloud\Tests\Core\Zookeeper\ZkClusterState;
+namespace Solarium\Cloud\Tests\Core\Zookeeper;
 
 use PHPUnit\Framework\TestCase;
 use Solarium\Cloud\Core\Zookeeper\ZkStateReader;
-use Symfony\Component\Cache\Adapter\FilesystemAdapter;
 
 /**
  * Class ZkStateReaderTest
- * @package Solarium\Cloud\Tests\Core\Zookeeper\ZkClusterState
+ * @package Solarium\Cloud\Tests\Core\Zookeeper
  */
 class ZkStateReaderTest extends TestCase
 {
-    /** @var  ZkStateReader */
-    protected $zkStateReader;
     protected $cache;
+    /* @var \Zookeeper */
+    protected $zkClient;
 
     protected function setUp()
     {
-        $this->cache = new FilesystemAdapter();
-        $this->zkStateReader = new ZkStateReader('localhost:2181', $this->cache);
-    }
+        $this->zkClient = $this->createMock(\Zookeeper::class);
+        $this->zkClient->method('exists')->willReturn(true)->withConsecutive();
+        $this->zkClient->method('getChildren')->withConsecutive(['/live_nodes'], ['/collections'], $this->any())
+            ->willReturnOnConsecutiveCalls(
+                ['localhost:8983_solr', 'localhost:8984_solr'],
+                ['collection1'],
+                ['shard1', 'shard2']
+            );
 
-    public function testReadCollectionAliases() {
-        $collectionAliases = $this->zkStateReader->getCollectionAliases();
-        //print_r($collectionAliases);
-        //$this->assertEquals('collection1', $configName);
-    }
-
-    public function testReadCollectionList() {
-        $collectionList = $this->zkStateReader->getCollectionList();
-        //print_r($collectionList);
-        //$this->assertEquals('collection1', $configName);
-    }
-
-    public function testReadCollectionState() {
-        $collectionStates = $this->zkStateReader->getCollectionState('collection1');
-        //print_r($collectionStates);
-        //$this->assertEquals('collection1', $configName);
+        $this->zkClient->method('get')
+            ->withConsecutive($this->any(), $this->any(), $this->any(), $this->any(), $this->any(), $this->any())
+            ->willReturnOnConsecutiveCalls(
+                ZookeeperTestData::ALIASES,
+                '{}', // Legacy cluster.json
+                ZookeeperTestData::COLLECTION_STATE,
+                ZookeeperTestData::SHARD1_LEADER,
+                ZookeeperTestData::SHARD2_LEADER,
+                '{}' // security.json
+            );
     }
 
     public function testReadClusterState() {
-        $clusterState = $this->zkStateReader->getClusterState();
-        //print_r($clusterState);
-        //$this->assertEquals('collection1', $configName);
+        $zkStateReader = new ZkStateReader($this->zkClient);
+        $clusterState = $zkStateReader->getClusterState();
+        $this->assertEquals(ZookeeperTestData::CLUSTER_STATE, $clusterState);
     }
 
-    public function testReadClusterProperties() {
-        $clusterProperties = $this->zkStateReader->getClusterProperties();
-        //print_r($clusterProperties);
-        //$this->assertEquals('collection1', );
-    }
-
-    public function testReadLiveNodes() {
-        $liveNodes = $this->zkStateReader->getLiveNodes();
-        //print_r($liveNodes);
-        //$this->assertEquals('collection1', );
-    }
-
-    public function testGetCollectionName() {
-        $configName = $this->zkStateReader->getCollectionName('collection1');
-        $this->assertEquals('collection1', $configName);
-        $configName = $this->zkStateReader->getCollectionName('collection');
-        $this->assertEquals('collection1', $configName);
-    }
-
-    public function testCollectionEndpoint() {
-        $endpoints = $this->zkStateReader->getCollectionEndpoint('collection1');
-        //print_r($endpoints);
-    }
-
-    protected function tearDown()
-    {
-        //TODO close objects
+    public function testReadCollectionState() {
+        $zkStateReader = new ZkStateReader($this->zkClient);
+        $collectionState = $zkStateReader->getCollectionState('collection1');
+        $this->assertEquals(ZookeeperTestData::COLLECTION_STATE_EXPECTED, serialize($collectionState));
     }
 }
