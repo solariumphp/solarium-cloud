@@ -23,7 +23,7 @@
         "ext-zookeeper": "~0.3.1"
     },
     "require-dev": {
-        "phpunit/phpunit": "~6.0"
+        "phpunit/phpunit": "~6.1"
     },
     "autoload": {
         "psr-4": { "Solarium\\Cloud\\": "src/Solarium/Cloud/" }
