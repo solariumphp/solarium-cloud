@@ -44,7 +44,9 @@ class ZkStateReaderTest extends TestCase
 
     protected function setUp()
     {
-        $this->zkClient = $this->createMock(\Zookeeper::class);
+        $this->zkClient = $this->getMockBuilder('\Zookeeper')
+            ->setMethods(['exists', 'get', 'getChildren'])
+            ->getMock();
         $this->zkClient->method('exists')->willReturn(true)->withConsecutive();
         $this->zkClient->method('getChildren')->withConsecutive(['/live_nodes'], ['/collections'], $this->any())
             ->willReturnOnConsecutiveCalls(
