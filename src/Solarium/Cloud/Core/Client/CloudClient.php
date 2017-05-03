@@ -142,7 +142,7 @@ class CloudClient extends Configurable implements CloudClientInterface
      *
      * These can be customized using {@link registerQueryType()}
      */
-    protected static $queryTypes = array(
+    protected $queryTypes = [
         self::QUERY_SELECT => '\Solarium\QueryType\Select\Query\Query',
         self::QUERY_UPDATE => '\Solarium\QueryType\Update\Query\Query',
         self::QUERY_PING => '\Solarium\QueryType\Ping\Query',
@@ -163,21 +163,21 @@ class CloudClient extends Configurable implements CloudClientInterface
         self::QUERY_ADMIN_ZK_PATH => 'Solarium\Cloud\QueryType\Admin\Zookeeper',
         self::QUERY_ADMIN_METRICS => 'Solarium\Cloud\QueryType\Admin\Metrics',
         */
-    );
+    ];
 
     /**
      * Plugin types.
      *
      * @var array
      */
-    protected static $pluginTypes = array(
+    protected $pluginTypes = [
         'postbigrequest' => 'Solarium\Plugin\PostBigRequest',
         'customizerequest' => 'Solarium\Plugin\CustomizeRequest\CustomizeRequest',
         // TODO //'parallelexecution' => 'Solarium\Plugin\ParallelExecution\ParallelExecution',
         // TODO //'bufferedadd' => 'Solarium\Plugin\BufferedAdd\BufferedAdd',
         // TODO //'prefetchiterator' => 'Solarium\Plugin\PrefetchIterator',
         'minimumscorefilter' => 'Solarium\Plugin\MinimumScoreFilter\MinimumScoreFilter',
-    );
+    ];
 
     /**
      * EventDispatcher.
