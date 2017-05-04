@@ -1174,7 +1174,7 @@ class CloudClient extends Configurable implements CloudClientInterface
      * @return null|Zookeeper
      *   Zookeeper client object
      */
-    public function getZkClient(): //?\Zookeeper
+    public function getZkClient()//: ?\Zookeeper
     {
         return $this->zkClient;
     }
