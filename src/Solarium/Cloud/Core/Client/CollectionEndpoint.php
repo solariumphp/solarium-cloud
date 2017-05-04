@@ -61,6 +61,18 @@ class CollectionEndpoint extends Configurable // TODO implements EndpointInterfa
     protected $path;
 
     /**
+     * Default options.
+     *
+     * The defaults match a standard Solr example instance as distributed by
+     * the Apache Lucene Solr project.
+     *
+     * @var array
+     */
+    protected $options = array(
+        'timeout' => 5,
+    );
+
+    /**
      * CollectionEndpoint constructor.
      * @param string             $collection
      * @param ZkStateReader      $zkStateReader
@@ -178,7 +190,7 @@ class CollectionEndpoint extends Configurable // TODO implements EndpointInterfa
     }
 
     /**
-     * Get timeout option.
+     * Get Solr timeout option.
      *
      * @return string
      */
@@ -188,7 +200,7 @@ class CollectionEndpoint extends Configurable // TODO implements EndpointInterfa
     }
 
     /**
-     * Set timeout option.
+     * Set Solr timeout option.
      *
      * @param int $timeout
      *
