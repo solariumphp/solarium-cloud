@@ -81,9 +81,9 @@ class PostExecuteRequest extends Event
     /**
      * Get the response object for this event.
      *
-     * @return Response
+     * @return Response|null
      */
-    public function getResponse(): \Solarium\Core\Client\Response
+    public function getResponse() //: ?\Solarium\Core\Client\Response
     {
         return $this->response;
     }
