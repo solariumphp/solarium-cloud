@@ -88,16 +88,23 @@ class ZkStateReader
 
     const URL_SCHEME = 'urlScheme';
 
-    const  GET_LEADER_RETRY_INTERVAL_MS = 50;
-    const  GET_LEADER_RETRY_DEFAULT_TIMEOUT = 4000;
-    const  LEADER_ELECT_ZKNODE = 'leader_elect';
-    const  SHARD_LEADERS_ZKNODE = 'leaders';
-    const  ELECTION_NODE = 'election';
+    const GET_LEADER_RETRY_INTERVAL_MS = 50;
+    const GET_LEADER_RETRY_DEFAULT_TIMEOUT = 4000;
+    const LEADER_ELECT_ZKNODE = 'leader_elect';
+    const SHARD_LEADERS_ZKNODE = 'leaders';
+    const ELECTION_NODE = 'election';
+
+    /** @var  array Aliases of collections */
+    protected $aliases;
+
+    /** @var  array Collections */
+    protected $collections;
 
     /** @var array Collections tracked in the legacy (shared) state format, reflects the contents of clusterstate.json. */
-    private $legacyCollectionStates = array();
+    protected $legacyCollectionStates = array();
 
-    /** Last seen ZK version of clusterstate.json. */
+    // TODO unused, check if needed
+    /** @var int Last seen ZK version of clusterstate.json. */
     protected $legacyClusterStateVersion = 0;
 
     /** @var  array Each individual collection state combined, without the legacy clusterstate.json values */
@@ -111,45 +118,47 @@ class ZkStateReader
 
     /** @var  array All the live nodes */
     protected $liveNodes = array();
+
     /** @var  array Cluster properties from clusterproperties.json */
     protected $clusterProperties;
-    protected $configManager;
-    protected $securityData;
+
+    // TODO unused, check if needed
     protected $collectionWatches;
+
+    // TODO unused, check if needed
+    protected $configManager;
+
+    /** @var  array Security information from security.json */
+    protected $securityData;
 
     /** @var Zookeeper Zookeeper client */
     protected $zkClient;
+
     /** @var array Zookeeper client callback container */
     protected $zkCallback = array();
 
-    /** @var  array Collections */
-    protected $collections;
-    /** @var  array Aliases of collections */
-    protected $aliases;
+    /** @var  AdapterInterface Cache object holding Zookeeper state information */
+    private $cache;
 
     /**
      * ZkStateReader constructor.
-     * @param Zookeeper        $zkClient Zookeeper instance
-     * @param AdapterInterface $cache    Caching object
+     * @param Zookeeper              $zkClient        Zookeeper instance
+     * @param null|AdapterInterface  $cache           Caching object
+     * @param null|int|\DateInterval $cacheExpiration Seconds or date interval when cache expires
      * @throws ZookeeperException
      */
-    public function __construct(Zookeeper $zkClient, AdapterInterface $cache = null)
+    public function __construct(Zookeeper $zkClient, AdapterInterface $cache = null, $cacheExpiration = null)
     {
         $this->zkClient = $zkClient;
-        //TODO check cache to see if we need to connect to zookeeper
-        //$zkState = null;
+        $this->cache = $cache;
 
-        if ($cache != null) {
-            //$zkState = $cache->getItem("solarium-cloud.zookeeper");
+        if (!$this->getCacheData()) {
+            try {
+                $this->readZookeeper();
+            } catch (\Exception $e) {
+                throw new ZookeeperException($e->getMessage());
+            }
         }
-        //if ($cache == null || !$zkState->isHit()) {
-        try {
-            $this->readZookeeper();
-        } catch (Exception $e) {
-            throw new ZookeeperException($e->getMessage());
-        }
-
-        //}
     }
 
     /**
@@ -157,7 +166,7 @@ class ZkStateReader
      */
     public function getCollectionAliases(): array
     {
-        if ($this->aliases != null && isset($this->aliases[self::COLLECTION_PROP])) {
+        if ($this->aliases !== null && isset($this->aliases[self::COLLECTION_PROP])) {
             return $this->aliases[self::COLLECTION_PROP];
         }
 
@@ -169,7 +178,7 @@ class ZkStateReader
      */
     public function getCollectionList(): array
     {
-        if ($this->collections != null) {
+        if ($this->collections !== null) {
             return $this->collections;
         }
 
@@ -181,7 +190,7 @@ class ZkStateReader
      */
     public function getClusterState(): array
     {
-        if ($this->clusterState != null) {
+        if ($this->clusterState !== null) {
             return $this->clusterState;
         }
 
@@ -193,7 +202,7 @@ class ZkStateReader
      */
     public function getClusterProperties(): array
     {
-        if ($this->clusterProperties != null) {
+        if ($this->clusterProperties !== null) {
             return $this->clusterProperties;
         }
 
@@ -205,7 +214,7 @@ class ZkStateReader
      */
     public function getLiveNodes(): array
     {
-        if ($this->liveNodes != null) {
+        if ($this->liveNodes !== null) {
             return $this->liveNodes;
         }
 
@@ -403,6 +412,119 @@ class ZkStateReader
         $this->readCollectionList();
         $this->readClusterState();
         $this->readSecurityData();
+
+        if ($this->cache !== null) {
+            $this->fillCacheData();
+        }
+    }
+
+    /**
+     * @return AdapterInterface
+     */
+    public function getCache(): AdapterInterface
+    {
+        return $this->cache;
+    }
+
+    /**
+     * @param AdapterInterface $cache
+     */
+    public function setCache(AdapterInterface $cache)
+    {
+        $this->cache = $cache;
+    }
+
+    /**
+     * Check if all the data is in cache
+     * @return bool
+     */
+    protected function getCacheData(): bool
+    {
+        try {
+            if ($this->cache !== null) {
+                if (!$this->cache->getItem('zkstate.aliases')->isHit()) {
+                    return false;
+                } else {
+                    $this->aliases = $this->cache->getItem('zkstate.aliases')->get();
+                }
+                if (!$this->cache->getItem('zkstate.collections')->isHit()) {
+                    return false;
+                } else {
+                    $this->collections = $this->cache->getItem('zkstate.collections')->get();
+                }
+                if (!$this->cache->getItem('zkstate.legacyCollectionStates')->isHit()) {
+                    return false;
+                } else {
+                    $this->legacyCollectionStates = $this->cache->getItem('zkstate.legacyCollectionStates')->get();
+                }
+                if (!$this->cache->getItem('zkstate.collectionStates')->isHit()) {
+                    return false;
+                } else {
+                    $this->aliases = $this->cache->getItem('zkstate.collectionStates')->get();
+                }
+                if (!$this->cache->getItem('zkstate.collectionStates')->isHit()) {
+                    return false;
+                } else {
+                    $this->aliases = $this->cache->getItem('zkstate.collectionStates')->get();
+                }
+                if (!$this->cache->getItem('zkstate.collectionShardLeaders')->isHit()) {
+                    return false;
+                } else {
+                    $this->aliases = $this->cache->getItem('zkstate.collectionShardLeaders')->get();
+                }
+                if (!$this->cache->getItem('zkstate.liveNodes')->isHit()) {
+                    return false;
+                } else {
+                    $this->aliases = $this->cache->getItem('zkstate.liveNodes')->get();
+                }
+                if (!$this->cache->getItem('zkstate.clusterProperties')->isHit()) {
+                    return false;
+                } else {
+                    $this->aliases = $this->cache->getItem('zkstate.clusterProperties')->get();
+                }
+                if (!$this->cache->getItem('zkstate.securityData')->isHit()) {
+                    return false;
+                } else {
+                    $this->aliases = $this->cache->getItem('zkstate.securityData')->get();
+                }
+
+                return true;
+            }
+        } catch (\Psr\Cache\InvalidArgumentException $e) {
+            return false;
+        }
+
+        return false;
+    }
+
+    /**
+     * Updates the cache object
+     *
+     * @param int|Date
+     * @return bool
+     *   Returns if storing data to cache was successful or not
+     * @throws \Solarium\Cloud\Exception\ZookeeperException
+     */
+    protected function fillCacheData($cacheExpiration = null): bool
+    {
+        if ($this->cache !== null) {
+            try {
+                $this->cache->save($this->cache->getItem('zkstate.aliases')->set($this->aliases)->expiresAfter($cacheExpiration));
+                $this->cache->save($this->cache->getItem('zkstate.collections')->set($this->collections)->expiresAfter($cacheExpiration));
+                $this->cache->save($this->cache->getItem('zkstate.legacyCollectionStates')->set($this->legacyCollectionStates)->expiresAfter($cacheExpiration));
+                $this->cache->save($this->cache->getItem('zkstate.collectionStates')->set($this->collectionStates)->expiresAfter($cacheExpiration));
+                $this->cache->save($this->cache->getItem('zkstate.clusterState')->set($this->clusterState)->expiresAfter($cacheExpiration));
+                $this->cache->save($this->cache->getItem('zkstate.collectionShardLeaders')->set($this->collectionShardLeaders)->expiresAfter($cacheExpiration));
+                $this->cache->save($this->cache->getItem('zkstate.liveNodes')->set($this->liveNodes)->expiresAfter($cacheExpiration));
+                $this->cache->save($this->cache->getItem('zkstate.clusterProperties')->set($this->clusterProperties)->expiresAfter($cacheExpiration));
+                $this->cache->save($this->cache->getItem('zkstate.securityData')->set($this->securityData)->expiresAfter($cacheExpiration));
+                $this->cache->save($this->cache->getItem('zkstate.securityData')->set($this->securityData)->expiresAfter($cacheExpiration));
+            } catch (\Psr\Cache\InvalidArgumentException $e) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**

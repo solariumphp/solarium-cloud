@@ -31,6 +31,7 @@ namespace Solarium\Cloud\Tests\Core\Zookeeper;
 
 use PHPUnit\Framework\TestCase;
 use Solarium\Cloud\Core\Zookeeper\ZkStateReader;
+use Symfony\Component\Cache\Adapter\FilesystemAdapter;
 
 /**
  * Class ZkStateReaderTest
@@ -70,12 +71,32 @@ class ZkStateReaderTest extends TestCase
     public function testReadClusterState() {
         $zkStateReader = new ZkStateReader($this->zkClient);
         $clusterState = $zkStateReader->getClusterState();
+
         $this->assertEquals(ZookeeperTestData::CLUSTER_STATE, $clusterState);
     }
 
+    /**
+     * Test if we can read the Collection State
+     */
     public function testReadCollectionState() {
         $zkStateReader = new ZkStateReader($this->zkClient);
         $collectionState = $zkStateReader->getCollectionState('collection1');
-        $this->assertEquals(ZookeeperTestData::COLLECTION_STATE_EXPECTED, serialize($collectionState));
+        $actual = base64_encode(serialize($collectionState));
+
+        $this->assertEquals(ZookeeperTestData::COLLECTION_STATE_EXPECTED, $actual);
+    }
+
+    /**
+     * Test if the cache component works
+     */
+    public function testCache()
+    {
+        $cache = new FilesystemAdapter();
+        $zkStateReader = new ZkStateReader($this->zkClient, $cache);
+        $clusterState = $zkStateReader->getClusterState();
+        $zkStateReader2 = new ZkStateReader($this->zkClient, $cache);
+        $clusterState2 = $zkStateReader2->getClusterState();
+
+        $this->assertEquals($clusterState, $clusterState2);
     }
 }
