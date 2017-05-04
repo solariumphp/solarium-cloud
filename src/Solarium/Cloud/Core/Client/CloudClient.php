@@ -1169,6 +1169,35 @@ class CloudClient extends Configurable implements CloudClientInterface
     }
 
     /**
+     * Return Zookeeper client object
+     *
+     * @return null|Zookeeper
+     *   Zookeeper client object
+     */
+    public function getZkClient(): ?\Zookeeper
+    {
+        return $this->zkClient;
+    }
+
+    /**
+     * Set Zookeeper client object and updates ZkStateReader as well
+     *
+     * @param Zookeeper $zkClient
+     *   Zookeeper client object
+     * @param ZkStateReader $zkStateReader;
+     */
+    public function setZkClient(\Zookeeper $zkClient, ZkStateReader $zkStateReader = null)
+    {
+        $this->zkClient = $zkClient;
+        if ($zkStateReader !== null) {
+
+        }
+        else {
+            $this->zkStateReader = new ZkStateReader($zkClient, $this->zkStateReader->get);
+        }
+    }
+
+    /**
      * Initialization hook.
      * @throws \Solarium\Cloud\Exception\ZookeeperException
      * @throws \Solarium\Exception\InvalidArgumentException
