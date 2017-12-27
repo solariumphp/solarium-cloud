@@ -2,7 +2,7 @@
 /**
  * BSD 2-Clause License
  *
- * Copyright (c) 2017 Jeroen Steggink
+ * Copyright (c) 2017 Jeroen Steggink, Bas de Nooijer
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,40 +27,28 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-namespace Solarium\Cloud\Tests\Core\Client;
-
-use PHPUnit\Framework\TestCase;
-use Solarium\Cloud\Client;
+namespace Solarium\Cloud\Core\Event;
 
 /**
- * Class CloudClientTest
- * @package Solarium\Cloud\Tests\Core\Client
+ * Event definitions.
  */
-class CloudClientTest extends TestCase
+class Events extends \Solarium\Core\Event\Events
 {
     /**
-     * @var Client
+     * The preExecuteRequest event is thrown just before a request is sent to Solr.
+     *
+     * The event listener receives a Request instance.
+     *
+     * @var string
      */
-    protected $client;
+    const PRE_EXECUTE_REQUEST = 'solarium-cloud.core.preExecuteRequest';
 
     /**
-     * Setup the client
+     * The postExecuteRequest event is thrown just after a request has been sent to Solr.
+     *
+     * The event listener receives a Request instance and a Response instance.
+     *
+     * @var string
      */
-    public function setUp()
-    {
-        //$options = array('zkhosts' => 'localhost:2181', 'defaultcollection' => 'collection1');
-        //$this->client = new Client($options);
-    }
-
-    /**
-     * Test basic connection
-     */
-    public function testSolrCloud()
-    {
-        //$this->client->setCollection('collection1');
-        //$query = $this->client->createSelect();
-        //$result = $this->client->select($query);
-        //print_r($result);
-    }
-
+    const POST_EXECUTE_REQUEST = 'solarium-cloud.core.postExecuteRequest';
 }

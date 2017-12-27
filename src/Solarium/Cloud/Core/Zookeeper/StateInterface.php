@@ -27,40 +27,25 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-namespace Solarium\Cloud\Tests\Core\Client;
-
-use PHPUnit\Framework\TestCase;
-use Solarium\Cloud\Client;
+namespace Solarium\Cloud\Core\Zookeeper;
 
 /**
- * Class CloudClientTest
- * @package Solarium\Cloud\Tests\Core\Client
+ * Interface StateInterface
  */
-class CloudClientTest extends TestCase
+interface StateInterface
 {
-    /**
-     * @var Client
-     */
-    protected $client;
 
     /**
-     * Setup the client
+     * @param array $state     State array received from Zookeeper
+     * @param array $liveNodes Live nodes array received from Zookeeper
+     * @return mixed
      */
-    public function setUp()
-    {
-        //$options = array('zkhosts' => 'localhost:2181', 'defaultcollection' => 'collection1');
-        //$this->client = new Client($options);
-    }
+    public function update(array $state, array $liveNodes);
 
     /**
-     * Test basic connection
+     * @param string $name
+     * @param null   $defaultValue
+     * @return mixed
      */
-    public function testSolrCloud()
-    {
-        //$this->client->setCollection('collection1');
-        //$query = $this->client->createSelect();
-        //$result = $this->client->select($query);
-        //print_r($result);
-    }
-
+    public function getStateProp(string $name, $defaultValue = null);
 }

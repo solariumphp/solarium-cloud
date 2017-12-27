@@ -27,40 +27,14 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-namespace Solarium\Cloud\Tests\Core\Client;
+namespace Solarium\Cloud\Exception;
 
-use PHPUnit\Framework\TestCase;
-use Solarium\Cloud\Client;
+use Solarium\Exception\InvalidArgumentException;
 
 /**
- * Class CloudClientTest
- * @package Solarium\Cloud\Tests\Core\Client
+ * Class UnsupportedOperationException
+ * @package Solarium\Cloud\Exception
  */
-class CloudClientTest extends TestCase
+class UnsupportedOperationException extends InvalidArgumentException
 {
-    /**
-     * @var Client
-     */
-    protected $client;
-
-    /**
-     * Setup the client
-     */
-    public function setUp()
-    {
-        //$options = array('zkhosts' => 'localhost:2181', 'defaultcollection' => 'collection1');
-        //$this->client = new Client($options);
-    }
-
-    /**
-     * Test basic connection
-     */
-    public function testSolrCloud()
-    {
-        //$this->client->setCollection('collection1');
-        //$query = $this->client->createSelect();
-        //$result = $this->client->select($query);
-        //print_r($result);
-    }
-
 }

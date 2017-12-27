@@ -30,37 +30,12 @@
 namespace Solarium\Cloud\Tests\Core\Client;
 
 use PHPUnit\Framework\TestCase;
-use Solarium\Cloud\Client;
 
 /**
- * Class CloudClientTest
+ * Class CollectionEndpointTest
  * @package Solarium\Cloud\Tests\Core\Client
  */
-class CloudClientTest extends TestCase
+class CollectionEndpointTest extends TestCase
 {
-    /**
-     * @var Client
-     */
-    protected $client;
-
-    /**
-     * Setup the client
-     */
-    public function setUp()
-    {
-        //$options = array('zkhosts' => 'localhost:2181', 'defaultcollection' => 'collection1');
-        //$this->client = new Client($options);
-    }
-
-    /**
-     * Test basic connection
-     */
-    public function testSolrCloud()
-    {
-        //$this->client->setCollection('collection1');
-        //$query = $this->client->createSelect();
-        //$result = $this->client->select($query);
-        //print_r($result);
-    }
 
 }

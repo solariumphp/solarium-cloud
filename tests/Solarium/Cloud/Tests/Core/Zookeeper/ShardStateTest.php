@@ -27,40 +27,18 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-namespace Solarium\Cloud\Tests\Core\Client;
+/**
+ * Created by PhpStorm.
+ * User: Jeroen Steggink
+ * Date: 27-3-2017
+ * Time: 15:35
+ */
+
+namespace Solarium\Cloud\Tests\Core\Zookeeper;
 
 use PHPUnit\Framework\TestCase;
-use Solarium\Cloud\Client;
 
-/**
- * Class CloudClientTest
- * @package Solarium\Cloud\Tests\Core\Client
- */
-class CloudClientTest extends TestCase
+class ShardStateTest extends TestCase
 {
-    /**
-     * @var Client
-     */
-    protected $client;
-
-    /**
-     * Setup the client
-     */
-    public function setUp()
-    {
-        //$options = array('zkhosts' => 'localhost:2181', 'defaultcollection' => 'collection1');
-        //$this->client = new Client($options);
-    }
-
-    /**
-     * Test basic connection
-     */
-    public function testSolrCloud()
-    {
-        //$this->client->setCollection('collection1');
-        //$query = $this->client->createSelect();
-        //$result = $this->client->select($query);
-        //print_r($result);
-    }
 
 }

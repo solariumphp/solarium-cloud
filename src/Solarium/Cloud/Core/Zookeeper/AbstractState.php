@@ -27,40 +27,56 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-namespace Solarium\Cloud\Tests\Core\Client;
-
-use PHPUnit\Framework\TestCase;
-use Solarium\Cloud\Client;
+namespace Solarium\Cloud\Core\Zookeeper;
 
 /**
- * Class CloudClientTest
- * @package Solarium\Cloud\Tests\Core\Client
+ * Class State
+ * @package Solarium\Cloud\Core\Zookeeper
  */
-class CloudClientTest extends TestCase
+abstract class AbstractState implements StateInterface
 {
-    /**
-     * @var Client
-     */
-    protected $client;
+    /** @var  array State array retrieved by ZkStateReader */
+    protected $stateRaw;
+
+    /** @var array Live nodes array received from Zookeeper */
+    protected $liveNodes;
 
     /**
-     * Setup the client
+     * State constructor.
+     * @param array $state     State array received from Zookeeper
+     * @param array $liveNodes Live nodes array received from Zookeeper
      */
-    public function setUp()
+    public function __construct(array $state, array $liveNodes)
     {
-        //$options = array('zkhosts' => 'localhost:2181', 'defaultcollection' => 'collection1');
-        //$this->client = new Client($options);
+        $this->update($state, $liveNodes);
     }
 
     /**
-     * Test basic connection
+     * {@inheritDoc}
      */
-    public function testSolrCloud()
+    public function update(array $state, array $liveNodes)
     {
-        //$this->client->setCollection('collection1');
-        //$query = $this->client->createSelect();
-        //$result = $this->client->select($query);
-        //print_r($result);
+        $this->stateRaw = $state;
+        $this->liveNodes = $liveNodes;
+        $this->init();
     }
 
+    /**
+     * @param string     $name
+     * @param mixed|null $defaultValue
+     * @return mixed
+     */
+    public function getStateProp(string $name, $defaultValue = null)
+    {
+        if (isset($this->stateRaw[$name])) {
+            return $this->stateRaw[$name];
+        }
+
+        return $defaultValue;
+    }
+
+    /**
+     * Initialize method
+     */
+    abstract protected function init();
 }
