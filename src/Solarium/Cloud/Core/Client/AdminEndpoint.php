@@ -2,7 +2,7 @@
 /**
  * BSD 2-Clause License
  *
- * Copyright (c) 2017 Jeroen Steggink
+ * Copyright (c) 2018 Jeroen Steggink
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,25 +27,24 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-namespace Solarium\Cloud\Core\Zookeeper;
+namespace Solarium\Cloud\Core\Client;
 
 /**
- * Interface StateInterface
+ * Class for describing a SolrCloud admin endpoint.
+ * @package Solarium\Cloud\Core\Client
  */
-interface StateInterface
+class AdminEndpoint extends AbstractEndpoint
 {
-
     /**
-     * @param array $state State array received from Zookeeper or Solr
-     * @param array $liveNodes
-     * @return mixed
+     * Get the base URI for all requests.
+     *
+     * Based on a random Solr URL from all URLs.
+     *
+     * @return string
      */
-    public function update(array $state, array $liveNodes);
+    public function getBaseUri(): string
+    {
+        return $this->getServerUri().'admin/';
+    }
 
-    /**
-     * @param string $name
-     * @param null   $defaultValue
-     * @return mixed
-     */
-    public function getStateProp(string $name, $defaultValue = null);
 }

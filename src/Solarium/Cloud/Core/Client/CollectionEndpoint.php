@@ -29,11 +29,9 @@
 
 namespace Solarium\Cloud\Core\Client;
 
-use Solarium\Cloud\Core\Zookeeper\CollectionState;
-use Solarium\Cloud\Core\Zookeeper\ZkStateReader;
-use Solarium\Cloud\Exception\ZookeeperException;
-use Solarium\Core\Client\AbstractEndpoint;
-use Solarium\Core\Configurable;
+use Solarium\Cloud\Core\Zookeeper\ClusterState;
+use Solarium\Cloud\Core\Zookeeper\StateReaderInterface;
+use Solarium\Cloud\Exception\SolrCloudException;
 
 // TODO Add a way to set select or update type, this will choose shard leaders or any of the nodes
 // TODO Load balancing in the Endpoint?
@@ -41,24 +39,13 @@ use Solarium\Core\Configurable;
  * Class for describing a SolrCloud collection endpoint.
  * @package Solarium\Cloud\Core\Client
  */
-class CollectionEndpoint extends Configurable // TODO implements EndpointInterface
+class CollectionEndpoint extends AbstractEndpoint
 {
-    /** @var  */
-    //protected $type = AbstractEndpoint::SOLRCLOUD;
     /** @var  string Name of the collection */
     protected $collection;
 
-    /** @var  ZkStateReader */
-    protected $zkStateReader;
-
-    /** @var  string */
-    protected $scheme;
-    /** @var  string */
-    protected $host;
-    /** @var  int */
-    protected $port;
-    /** @var  string */
-    protected $path;
+    /** @var  StateReaderInterface */
+    protected $stateReader;
 
     /**
      * Default options.
@@ -75,56 +62,15 @@ class CollectionEndpoint extends Configurable // TODO implements EndpointInterfa
     /**
      * CollectionEndpoint constructor.
      * @param string             $collection
-     * @param ZkStateReader      $zkStateReader
+     * @param StateReaderInterface      $stateReader
      * @param array|\Zend_Config $options
      * @throws \Solarium\Exception\InvalidArgumentException
      */
-    public function __construct(string $collection, ZkStateReader $zkStateReader, array $options = null)
+    public function __construct(string $collection, StateReaderInterface $stateReader, array $options = null)
     {
         $this->collection = $collection;
-        $this->zkStateReader = $zkStateReader;
+        $this->stateReader = $stateReader;
         parent::__construct($options);
-    }
-
-    /**
-     * Set HTTP basic auth settings.
-     *
-     * If one or both values are NULL authentication will be disabled
-     *
-     * @param string $username
-     * @param string $password
-     *
-     * @return self Provides fluent interface
-     */
-    public function setAuthentication($username, $password): CollectionEndpoint
-    {
-        $this->setOption('username', $username);
-        $this->setOption('password', $password);
-
-        return $this;
-    }
-
-    /**
-     * Get HTTP basic auth settings.
-     *
-     * @return array
-     */
-    public function getAuthentication(): array
-    {
-        return array(
-            'username' => $this->getOption('username'),
-            'password' => $this->getOption('password'),
-        );
-    }
-
-    /**
-     * Get host option.
-     *
-     * @return string
-     */
-    public function getHost(): string
-    {
-        return $this->host;
     }
 
     /**
@@ -138,80 +84,6 @@ class CollectionEndpoint extends Configurable // TODO implements EndpointInterfa
     }
 
     /**
-     * Get path option.
-     *
-     * @return string
-     */
-    public function getPath(): string
-    {
-        return $this->path;
-    }
-
-    /**
-     * Get port option.
-     *
-     * @return int
-     */
-    public function getPort(): int
-    {
-        return $this->port;
-    }
-
-    /**
-     * Get scheme option.
-     *
-     * @return string
-     */
-    public function getScheme(): string
-    {
-        return $this->scheme;
-    }
-
-    /**
-     * Get the base uri for all requests.
-     *
-     * Based on host, path, port and core/collection options.
-     *
-     * @return string
-     */
-    public function getBaseUri(): string
-    {
-        return $this->getServerUri().$this->getCollection().'/';
-    }
-
-    /**
-     * Get the server uri
-     *
-     * @return string
-     */
-    public function getServerUri(): string
-    {
-        return $this->getScheme().'://'.$this->getHost().':'.$this->getPort().$this->getPath().'/';
-    }
-
-    /**
-     * Get Solr timeout option.
-     *
-     * @return string
-     */
-    public function getTimeout(): string
-    {
-        return $this->getOption('timeout');
-    }
-
-    /**
-     * Set Solr timeout option.
-     *
-     * @param int $timeout
-     *
-     * @return Configurable Provides fluent interface
-     */
-    public function setTimeout($timeout): Configurable
-    {
-        return $this->setOption('timeout', $timeout);
-    }
-
-    /**
      * Magic method enables a object to be transformed to a string.
      *
      * Get a summary showing significant variables in the object
@@ -221,25 +93,30 @@ class CollectionEndpoint extends Configurable // TODO implements EndpointInterfa
      */
     public function __toString()
     {
-        return __CLASS__.'::__toString'."\n".'base uri: '.$this->getBaseUri()."\n".'host: '.$this->getHost()."\n".'port: '.$this->getPort()."\n".'path: '.$this->getPath()."\n".'collection: '.$this->getCollection()."\n".'timeout: '.$this->getTimeout()."\n".'authentication: '.print_r($this->getAuthentication(), 1);
+        return __CLASS__.'::__toString'."\n".'base uri: '.$this->getBaseUri()."\n".'Solr URLs: '.$this->getSolrUrls()."\n".'collection: '.$this->getCollection()."\n".'timeout: '.$this->getTimeout()."\n".'authentication: '.print_r($this->getAuthentication(), 1);
     }
 
     /**
-     * @return CollectionState
-     * @throws \Solarium\Cloud\Exception\ZookeeperException
+     * @throws SolrCloudException
+     * @return ClusterState
      */
-    protected function getCollectionState(): CollectionState
+    protected function getCollectionState(): ClusterState
     {
-        return $this->zkStateReader->getCollectionState($this->collection);
+        if(array_key_exists($this->stateReader->getClusterState(), $this->collection)) {
+            return $this->stateReader->getClusterState()[$this->collection];
+        }
+        else {
+           throw new SolrCloudException("Collection does not exist.");
+        }
     }
 
     /**
-     *
-     * @throws \Solarium\Cloud\Exception\ZookeeperException
+     * Retrieve a random node, poor man's load balancer.
+     * @throws SolrCloudException
      */
     protected function randomNodeBaseUri()
     {
-        $nodesBaseUris = $this->zkStateReader->getCollectionState($this->collection)->getNodesBaseUris();
+        $nodesBaseUris = $this->getCollectionState()->getNodesBaseUris();
         shuffle($nodesBaseUris);
         $parseUri = parse_url(reset($nodesBaseUris));
         $this->scheme = $parseUri['scheme'];
@@ -254,7 +131,7 @@ class CollectionEndpoint extends Configurable // TODO implements EndpointInterfa
      * In this case the path needs to be cleaned of trailing slashes.
      *
      * @see setPath()
-     * @throws \Solarium\Cloud\Exception\ZookeeperException
+     * @throws SolrCloudException
      */
     protected function init()
     {

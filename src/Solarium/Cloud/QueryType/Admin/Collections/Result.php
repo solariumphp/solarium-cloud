@@ -2,7 +2,7 @@
 /**
  * BSD 2-Clause License
  *
- * Copyright (c) 2017 Jeroen Steggink
+ * Copyright (c) 2018 Jeroen Steggink
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,25 +27,67 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-namespace Solarium\Cloud\Core\Zookeeper;
+namespace Solarium\Cloud\QueryType\Admin\Collections;
 
-/**
- * Interface StateInterface
- */
-interface StateInterface
+use Solarium\Cloud\Component\Admin\Collections\ClusterStatus;
+use Solarium\Cloud\Component\Admin\Collections\ComponentAwareCollectionsInterface;
+use Solarium\Cloud\Core\Zookeeper\ClusterState;
+use Solarium\Core\Query\Result\QueryType;
+
+class Result extends QueryType
 {
+    /**
+     * Component results.
+     */
+    protected $components;
 
     /**
-     * @param array $state State array received from Zookeeper or Solr
-     * @param array $liveNodes
-     * @return mixed
+     * Get all component results.
+     *
+     * @return array
      */
-    public function update(array $state, array $liveNodes);
+    public function getComponents()
+    {
+        $this->parseResponse();
+
+        return $this->components;
+    }
 
     /**
-     * @param string $name
-     * @param null   $defaultValue
+     * Get a component result by key.
+     *
+     * @param string $key
+     *
      * @return mixed
      */
-    public function getStateProp(string $name, $defaultValue = null);
+    public function getComponent($key)
+    {
+        $this->parseResponse();
+
+        if (isset($this->components[$key])) {
+            return $this->components[$key];
+        }
+
+        return null;
+    }
+
+    /**
+     * Set components.
+     * @param $components
+     */
+    public function setComponents($components) {
+        $this->components = $components;
+    }
+
+    /**
+     * Get cluster status.
+     *
+     * This is a convenience method that maps presets to getComponent
+     *
+     * @return \Solarium\Cloud\Component\Admin\Collections\Result\ClusterStatus|null
+     */
+    public function getClusterStatus()
+    {
+        return $this->getComponent(ComponentAwareCollectionsInterface::CLUSTERSTATUS);
+    }
 }

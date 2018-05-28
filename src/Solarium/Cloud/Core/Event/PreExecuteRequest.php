@@ -29,10 +29,11 @@
 
 namespace Solarium\Cloud\Core\Event;
 
+use Solarium\Cloud\Core\Client\CollectionEndpoint;
+use Solarium\Cloud\Core\Client\EndpointInterface;
 use Symfony\Component\EventDispatcher\Event;
 use Solarium\Core\Client\Request;
 use Solarium\Core\Client\Response;
-use Solarium\Cloud\Core\Client\CollectionEndpoint;
 
 /**
  * PreExecuteRequest event, see Events for details.
@@ -45,7 +46,7 @@ class PreExecuteRequest extends Event
     protected $request;
 
     /**
-     * @var CollectionEndpoint
+     * @var EndpointInterface
      */
     protected $endpoint;
 
@@ -57,10 +58,10 @@ class PreExecuteRequest extends Event
     /**
      * Event constructor.
      *
-     * @param Request            $request
-     * @param CollectionEndpoint $endpoint
+     * @param Request $request
+     * @param EndpointInterface $endpoint
      */
-    public function __construct(Request $request, CollectionEndpoint $endpoint)
+    public function __construct(Request $request, EndpointInterface $endpoint)
     {
         $this->request = $request;
         $this->endpoint = $endpoint;
@@ -69,9 +70,9 @@ class PreExecuteRequest extends Event
     /**
      * Get the endpoint object for this event.
      *
-     * @return CollectionEndpoint
+     * @return EndpointInterface
      */
-    public function getEndpoint(): \Solarium\Cloud\Core\Client\CollectionEndpoint
+    public function getEndpoint(): \Solarium\Cloud\Core\Client\EndpointInterface
     {
         return $this->endpoint;
     }

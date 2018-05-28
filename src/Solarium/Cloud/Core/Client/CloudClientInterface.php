@@ -30,6 +30,7 @@
 namespace Solarium\Cloud\Core\Client;
 
 use Solarium\Cloud\Core\Client\Adapter\AdapterInterface;
+use Solarium\Cloud\Core\Zookeeper\StateReaderInterface;
 use Solarium\Core\Client\Adapter;
 use Solarium\Core\Query\AbstractQuery;
 use Solarium\Core\Query\QueryInterface;
@@ -123,7 +124,7 @@ interface CloudClientInterface
     public function getOptimizeTimeout(): int;
 
     /**
-     * Set optimize timeout
+     * Set optimize timeout.
      *
      * @param int $optimizeTimeout
      * @return CloudClientInterface Provides fluent interface
@@ -131,19 +132,34 @@ interface CloudClientInterface
     public function setOptimizeTimeout(int $optimizeTimeout): CloudClientInterface;
 
     /**
-     * Get Zookeeper client timeout
+     * Get state reader.
+     *
+     * @return StateReaderInterface
+     */
+    public function getStateReader(): StateReaderInterface;
+
+    /**
+     * Set state reader.
+     *
+     * @param StateReaderInterface $stateReader
+     * @return CloudClientInterface Provides fluent interface
+     */
+    public function setStateReader(StateReaderInterface $stateReader): CloudClientInterface;
+
+    /**
+     * Get state reader client timeout.
      *
      * @return int
      */
-    public function getZkTimeout(): int;
+    public function getStateReaderTimeout(): int;
 
     /**
-     * Set Zookeeper client timeout
+     * Set state reader client timeout
      *
      * @param int $timeout
      * @return CloudClientInterface Provides fluent interface
      */
-    public function setZkTimeout(int $timeout): CloudClientInterface;
+    public function setStateReaderTimeout(int $timeout): CloudClientInterface;
 
     /**
      * @return bool

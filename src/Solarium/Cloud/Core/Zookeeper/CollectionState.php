@@ -29,7 +29,7 @@
 
 namespace Solarium\Cloud\Core\Zookeeper;
 
-use Solarium\Cloud\Exception\ZookeeperException;
+use Solarium\Cloud\Exception\SolrCloudException;
 
 /**
  * Class for describing a SolrCloud collection endpoint.
@@ -42,7 +42,11 @@ class CollectionState extends AbstractState
     /** @var  ShardState[] */
     protected $shards;
     /** @var  array Array of aliases for collection */
-    protected $aliases;
+
+    public function __construct(array $collection, array $liveNodes)
+    {
+        parent::__construct($collection, $liveNodes);
+    }
 
     /**
      * Name of the collection
@@ -72,6 +76,25 @@ class CollectionState extends AbstractState
     public function isAutoAddReplicas(): bool
     {
         return $this->getState()[ZkStateReader::AUTO_ADD_REPLICAS];
+    }
+
+
+    /**
+     * Returns collection aliases.
+     * @return string[]
+     */
+    public function getAliases(): array
+    {
+        return $this->getState()[ZkStateReader::ALIASES_PROP];
+    }
+
+    /**
+     * Returns collection aliases.
+     * @return string[]
+     */
+    public function getClusterProperties(): array
+    {
+        return $this->getState()[ZkStateReader::ALIASES_PROP];
     }
 
     /**
@@ -148,7 +171,7 @@ class CollectionState extends AbstractState
      * Array with node names as keys and base URIs as values.
      *
      * @return string[]
-     * @throws ZookeeperException
+     * @throws SolrCloudException
      */
     public function getNodesBaseUris(): array
     {
@@ -161,7 +184,7 @@ class CollectionState extends AbstractState
         }
 
         if (empty($uris)) {
-            throw new ZookeeperException('No Solr nodes are available for this collection.');
+            throw new SolrCloudException('No Solr nodes are available for this collection.');
         }
 
         return $uris;

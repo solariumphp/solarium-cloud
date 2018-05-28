@@ -2,7 +2,7 @@
 /**
  * BSD 2-Clause License
  *
- * Copyright (c) 2017 Jeroen Steggink
+ * Copyright (c) 2018 Jeroen Steggink
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,23 +29,64 @@
 
 namespace Solarium\Cloud\Core\Zookeeper;
 
-/**
- * Interface StateInterface
- */
-interface StateInterface
+use Solarium\Cloud\Core\Zookeeper\CollectionState;
+
+class ClusterState
 {
+    /*
+     * @var string[]
+     */
+    protected $aliases;
+    /**
+     * @var CollectionState[]
+     */
+    protected $collections;
+    /**
+     * @var string[]
+     */
+    protected $liveNodes;
+
+    public function __construct(array $clusterStatus)
+    {
+        $this->aliases = $clusterStatus['aliases'];
+        foreach ($clusterStatus['collections'] as $collectionName => $collectionState) {
+            $this->collections[$collectionName] = new CollectionState([$collectionName => $collectionState], $clusterStatus['live_nodes']);
+        }
+        $this->liveNodes = $clusterStatus['live_nodes'];
+    }
 
     /**
-     * @param array $state State array received from Zookeeper or Solr
-     * @param array $liveNodes
-     * @return mixed
+     * @return string[]
      */
-    public function update(array $state, array $liveNodes);
+    public function getAliases()
+    {
+        return $this->aliases;
+    }
 
     /**
-     * @param string $name
-     * @param null   $defaultValue
-     * @return mixed
+     * @return ClusterState[]
      */
-    public function getStateProp(string $name, $defaultValue = null);
+    public function getCollections(): array
+    {
+        return $this->collections;
+    }
+
+    /**
+     * @param string $collectionName
+     * @return \Solarium\Cloud\Core\Zookeeper\CollectionState
+     */
+    public function getCollection(string $collectionName): \Solarium\Cloud\Core\Zookeeper\CollectionState
+    {
+        return $this->collections[$collectionName];
+    }
+
+    /**
+     * @return string[]
+     */
+    public function getLiveNodes()
+    {
+        return $this->liveNodes;
+    }
+
+
 }

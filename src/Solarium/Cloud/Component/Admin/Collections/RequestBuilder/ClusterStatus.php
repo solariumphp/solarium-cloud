@@ -2,7 +2,7 @@
 /**
  * BSD 2-Clause License
  *
- * Copyright (c) 2017 Jeroen Steggink
+ * Copyright (c) 2018 Jeroen Steggink
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,40 +27,36 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-namespace Solarium\Cloud\Tests\Core\Client;
+namespace Solarium\Cloud\Component\Admin\Collections\RequestBuilder;
 
-use PHPUnit\Framework\TestCase;
-use Solarium\Cloud\Client;
+use Solarium\Component\RequestBuilder\ComponentRequestBuilderInterface;
+use Solarium\Core\Client\Request;
+use Solarium\Core\ConfigurableInterface;
 
-/**
- * Class CloudClientTest
- * @package Solarium\Cloud\Tests\Core\Client
- */
-class CloudClientTest extends TestCase
+class ClusterStatus implements ComponentRequestBuilderInterface
 {
-    /**
-     * @var Client
-     */
-    protected $client;
 
     /**
-     * Setup the client
+     * Add request settings for the debug component.
+     *
+     * @param \Solarium\Cloud\Component\Admin\Collections\ClusterStatus $component
+     * @param Request $request
+     *
+     * @return Request
      */
-    public function setUp()
+    public function buildComponent($component, $request)
     {
-        //$options = array('zkhosts' => 'localhost:2181', 'defaultcollection' => 'collection1');
-        //$this->client = new Client($options);
-    }
+        $request->addParam('action', 'CLUSTERSTATUS');
+        if($component->getCollection() != null) {
+            $request->addParam('collection', $component->getCollection());
+        }
+        if($component->getShard() != null) {
+            $request->addParam('shard', $component->getShard());
+        }
+        if($component->getRoute() != null) {
+            $request->addParam('_route_', $component->getRoute());
+        }
 
-    /**
-     * Test basic connection
-     */
-    public function testSolrCloud()
-    {
-        //$this->client->setCollection('collection1');
-        //$query = $this->client->createSelect();
-        //$result = $this->client->select($query);
-        //print_r($result);
+        return $request;
     }
-
 }

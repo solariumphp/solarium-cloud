@@ -2,7 +2,7 @@
 /**
  * BSD 2-Clause License
  *
- * Copyright (c) 2017 Jeroen Steggink
+ * Copyright (c) 2018 Jeroen Steggink
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,25 +27,43 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-namespace Solarium\Cloud\Core\Zookeeper;
+namespace Solarium\Cloud\Tests\Core\Client;
+
+use PHPUnit\Framework\TestCase;
+use Solarium\Cloud\Client;
+use Solarium\Cloud\Core\Zookeeper\SolrCloudStateReader;
 
 /**
- * Interface StateInterface
+ * Class CloudClientTest
+ * @package Solarium\Cloud\Tests\Core\Client
  */
-interface StateInterface
+class CloudClientTest extends TestCase
 {
+    /**
+     * @var Client
+     */
+    protected $client;
 
     /**
-     * @param array $state State array received from Zookeeper or Solr
-     * @param array $liveNodes
-     * @return mixed
+     * Setup the client
      */
-    public function update(array $state, array $liveNodes);
+    public function setUp()
+    {
+        $this->client = new Client(array('solrurls' => array('http://localhost:8983/solr')));
+    }
 
     /**
-     * @param string $name
-     * @param null   $defaultValue
-     * @return mixed
+     * Test basic connection
      */
-    public function getStateProp(string $name, $defaultValue = null);
+    public function testSolrCloud()
+    {
+        $query = $this->client->createCollectionsAPI();
+        $clusterStatus = $query->getClusterStatus();
+        $result = $this->client->collections($query);
+        $clusterState = $result->getClusterStatus();
+        $collectionState = $result->getClusterStatus()->getCollectionState('test');
+        $aliases = $collectionState->getAliases();
+        echo "blaat";
+    }
+
 }

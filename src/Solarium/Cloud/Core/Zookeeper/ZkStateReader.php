@@ -29,7 +29,6 @@
 
 namespace Solarium\Cloud\Core\Zookeeper;
 
-use PHPUnit\Runner\Exception;
 use Solarium\Cloud\Core\Client\CollectionEndpoint;
 use Solarium\Exception\InvalidArgumentException;
 use Solarium\Cloud\Exception\ZookeeperException;
@@ -40,7 +39,7 @@ use \Zookeeper;
  * Class ZkStateReader
  * @package Solarium\Cloud\Core\Zookeeper
  */
-class ZkStateReader
+class ZkStateReader implements StateReaderInterface
 {
     const BASE_URL_PROP = 'base_url';
     const NODE_NAME_PROP = 'node_name';
@@ -68,6 +67,7 @@ class ZkStateReader
     const COLLECTIONS_ZKNODE = '/collections';
     const LIVE_NODES_ZKNODE = '/live_nodes';
     const ALIASES = '/aliases.json';
+    const ALIASES_PROP = 'aliases';
     const CLUSTER_STATE = '/clusterstate.json';
     const CLUSTER_PROPS = '/clusterprops.json';
     const COLLECTION_STATE = 'state.json';
@@ -131,6 +131,11 @@ class ZkStateReader
     /** @var  array Security information from security.json */
     protected $securityData;
 
+    /**
+     * @var string[] Zookeeper hosts.
+     */
+    protected $zkHosts;
+
     /** @var Zookeeper Zookeeper client */
     protected $zkClient;
 
@@ -142,14 +147,15 @@ class ZkStateReader
 
     /**
      * ZkStateReader constructor.
-     * @param Zookeeper              $zkClient        Zookeeper instance
-     * @param null|AdapterInterface  $cache           Caching object
+     * @param array $zkHosts
+     * @param null|AdapterInterface $cache Caching object
      * @param null|int|\DateInterval $cacheExpiration Seconds or date interval when cache expires
      * @throws ZookeeperException
      */
-    public function __construct(Zookeeper $zkClient, AdapterInterface $cache = null, $cacheExpiration = null)
+    public function __construct(array $zkHosts, AdapterInterface $cache = null, $cacheExpiration = null)
     {
-        $this->zkClient = $zkClient;
+        $this->zkHosts = $zkHosts;
+        $this->zkClient = new Zookeeper($this->zkHosts, null, $this->zkTimeout);
         $this->cache = $cache;
 
         if (!$this->getCacheData()) {
@@ -293,7 +299,7 @@ class ZkStateReader
 
     /**
      * Return all active CollectionStates
-     * @return CollectionState[] An array of CollectionStates where the keys are the ids of the CollectionStates
+     * @return ClusterState[] An array of CollectionStates where the keys are the ids of the CollectionStates
      * @throws \Solarium\Cloud\Exception\ZookeeperException
      */
     public function getEndpoints(): array
@@ -321,7 +327,7 @@ class ZkStateReader
                 throw new ZookeeperException("Collection '$collection' does not exist.'");
             }
 
-            return new CollectionState(array($collection => $this->clusterState[$collection]), $this->getLiveNodes());
+            return new ClusterState(array($collection => $this->clusterState[$collection]));
         }
 
         throw new ZookeeperException('The cluster state is unknown.');
@@ -366,7 +372,7 @@ class ZkStateReader
      * @return string
      * @throws InvalidArgumentException
      */
-    public static function buildZkHostString(array $zkHosts, string $chroot = ''): string
+    protected static function buildZkHostString(array $zkHosts, string $chroot = ''): string
     {
         if (!is_array($zkHosts) || empty($zkHosts)) {
             throw new InvalidArgumentException('Cannot create CloudSearchClient without valid ZooKeeper host; none specified!');
@@ -405,7 +411,7 @@ class ZkStateReader
      * Reads data from Zookeeper
      * @throws \Solarium\Cloud\Exception\ZookeeperException
      */
-    public function readZookeeper()
+    protected function readZookeeper()
     {
         $this->readLiveNodes();
         $this->readAliases();
@@ -460,32 +466,27 @@ class ZkStateReader
                 if (!$this->cache->getItem('zkstate.collectionStates')->isHit()) {
                     return false;
                 } else {
-                    $this->aliases = $this->cache->getItem('zkstate.collectionStates')->get();
-                }
-                if (!$this->cache->getItem('zkstate.collectionStates')->isHit()) {
-                    return false;
-                } else {
-                    $this->aliases = $this->cache->getItem('zkstate.collectionStates')->get();
+                    $this->collectionStates = $this->cache->getItem('zkstate.collectionStates')->get();
                 }
                 if (!$this->cache->getItem('zkstate.collectionShardLeaders')->isHit()) {
                     return false;
                 } else {
-                    $this->aliases = $this->cache->getItem('zkstate.collectionShardLeaders')->get();
+                    $this->collectionShardLeaders = $this->cache->getItem('zkstate.collectionShardLeaders')->get();
                 }
                 if (!$this->cache->getItem('zkstate.liveNodes')->isHit()) {
                     return false;
                 } else {
-                    $this->aliases = $this->cache->getItem('zkstate.liveNodes')->get();
+                    $this->liveNodes = $this->cache->getItem('zkstate.liveNodes')->get();
                 }
                 if (!$this->cache->getItem('zkstate.clusterProperties')->isHit()) {
                     return false;
                 } else {
-                    $this->aliases = $this->cache->getItem('zkstate.clusterProperties')->get();
+                    $this->clusterProperties = $this->cache->getItem('zkstate.clusterProperties')->get();
                 }
                 if (!$this->cache->getItem('zkstate.securityData')->isHit()) {
                     return false;
                 } else {
-                    $this->aliases = $this->cache->getItem('zkstate.securityData')->get();
+                    $this->securityData = $this->cache->getItem('zkstate.securityData')->get();
                 }
 
                 return true;
@@ -501,9 +502,7 @@ class ZkStateReader
      * Updates the cache object
      *
      * @param int|Date
-     * @return bool
-     *   Returns if storing data to cache was successful or not
-     * @throws \Solarium\Cloud\Exception\ZookeeperException
+     * @return bool Returns whether storing data to cache was successful or not.
      */
     protected function fillCacheData($cacheExpiration = null): bool
     {

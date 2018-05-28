@@ -2,7 +2,7 @@
 /**
  * BSD 2-Clause License
  *
- * Copyright (c) 2017 Jeroen Steggink
+ * Copyright (c) 2018 Jeroen Steggink
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,25 +27,9 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-namespace Solarium\Cloud\Core\Zookeeper;
+namespace Solarium\Cloud\Component\Admin;
 
-/**
- * Interface StateInterface
- */
-interface StateInterface
+abstract class AbstractComponent extends Configurable
 {
 
-    /**
-     * @param array $state State array received from Zookeeper or Solr
-     * @param array $liveNodes
-     * @return mixed
-     */
-    public function update(array $state, array $liveNodes);
-
-    /**
-     * @param string $name
-     * @param null   $defaultValue
-     * @return mixed
-     */
-    public function getStateProp(string $name, $defaultValue = null);
 }

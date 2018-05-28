@@ -2,7 +2,7 @@
 /**
  * BSD 2-Clause License
  *
- * Copyright (c) 2017 Jeroen Steggink, Bas de Nooijer
+ * Copyright (c) 2018 Jeroen Steggink
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,74 +27,78 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-namespace Solarium\Cloud\Core\Event;
+namespace Solarium\Cloud\Core\Client;
 
-use Solarium\Cloud\Core\Client\EndpointInterface;
-use Symfony\Component\EventDispatcher\Event;
-use Solarium\Core\Client\Request;
-use Solarium\Core\Client\Response;
+use Solarium\Core\Configurable;
 
 /**
- * PostExecuteRequest event, see Events for details.
+ * Interface for describing a SolrCloud endpoint.
+ * @package Solarium\Cloud\Core\Client
  */
-class PostExecuteRequest extends Event
+interface EndpointInterface
 {
     /**
-     * @var Request
-     */
-    protected $request;
-
-    /**
-     * @var EndpointInterface
-     */
-    protected $endpoint;
-
-    /**
-     * @var Response
-     */
-    protected $response;
-
-    /**
-     * Event constructor.
+     * Set HTTP basic auth settings.
      *
-     * @param Request            $request
-     * @param EndpointInterface $endpoint
-     * @param Response           $response
+     * If one or both values are NULL authentication will be disabled
+     *
+     * @param string $username
+     * @param string $password
+     *
+     * @return AbstractEndpoint Provides fluent interface
      */
-    public function __construct(Request $request, EndpointInterface $endpoint, Response $response)
-    {
-        $this->request = $request;
-        $this->endpoint = $endpoint;
-        $this->response = $response;
-    }
+    public function setAuthentication($username, $password): AbstractEndpoint;
 
     /**
-     * Get the endpoint object for this event.
+     * Get HTTP basic auth settings.
      *
-     * @return EndpointInterface
+     * @return array
      */
-    public function getEndpoint(): \Solarium\Cloud\Core\Client\EndpointInterface
-    {
-        return $this->endpoint;
-    }
+    public function getAuthentication(): array;
 
     /**
-     * Get the response object for this event.
+     * Get a random host.
      *
-     * @return Response|null
+     * @return string
      */
-    public function getResponse() //: ?\Solarium\Core\Client\Response
-    {
-        return $this->response;
-    }
+    public function getSolrUrl(): string;
 
     /**
-     * Get the request object for this event.
+     * Get all Solr URLs.
      *
-     * @return Request
+     * @return string[]
      */
-    public function getRequest(): \Solarium\Core\Client\Request
-    {
-        return $this->request;
-    }
+    public function getSolrUrls(): array;
+
+    /**
+     * Get the base uri for all requests.
+     *
+     * Based on a random host from all hosts and the path.
+     *
+     * @return string
+     */
+    public function getBaseUri(): string;
+
+    /**
+     * Get the server uri
+     *
+     * @return string
+     */
+    public function getServerUri(): string;
+
+    /**
+     * Get Solr timeout option.
+     *
+     * @return string
+     */
+    public function getTimeout(): string;
+
+    /**
+     * Set Solr timeout option.
+     *
+     * @param int $timeout
+     *
+     * @return Configurable Provides fluent interface
+     */
+    public function setTimeout($timeout): Configurable;
 }

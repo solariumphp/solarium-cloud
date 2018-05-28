@@ -80,7 +80,7 @@ class ZkStateReaderTest extends TestCase
      */
     public function testReadCollectionState() {
         $zkStateReader = new ZkStateReader($this->zkClient);
-        $collectionState = $zkStateReader->getCollectionState('collection1');
+        $collectionState = $zkStateReader->getClusterState();
         $actual = base64_encode(serialize($collectionState));
 
         $this->assertEquals(ZookeeperTestData::COLLECTION_STATE_EXPECTED, $actual);

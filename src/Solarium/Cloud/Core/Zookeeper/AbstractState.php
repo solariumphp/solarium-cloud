@@ -38,17 +38,14 @@ abstract class AbstractState implements StateInterface
     /** @var  array State array retrieved by ZkStateReader */
     protected $stateRaw;
 
-    /** @var array Live nodes array received from Zookeeper */
-    protected $liveNodes;
-
     /**
      * State constructor.
-     * @param array $state     State array received from Zookeeper
-     * @param array $liveNodes Live nodes array received from Zookeeper
+     * @param array $collections State array received from Zookeeper
+     * @param array $liveNodes
      */
-    public function __construct(array $state, array $liveNodes)
+    public function __construct(array $collections, array $liveNodes)
     {
-        $this->update($state, $liveNodes);
+        $this->update($collections, $liveNodes);
     }
 
     /**

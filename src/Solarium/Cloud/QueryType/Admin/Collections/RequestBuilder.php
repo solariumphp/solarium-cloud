@@ -2,7 +2,7 @@
 /**
  * BSD 2-Clause License
  *
- * Copyright (c) 2017 Jeroen Steggink
+ * Copyright (c) 2018 Jeroen Steggink
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,25 +27,35 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-namespace Solarium\Cloud\Core\Zookeeper;
+namespace Solarium\Cloud\QueryType\Admin\Collections;
 
-/**
- * Interface StateInterface
- */
-interface StateInterface
+use Solarium\Cloud\Core\Client\AdminRequest;
+use Solarium\Core\Query\QueryInterface;
+use Solarium\Core\Query\RequestBuilderInterface;
+
+class RequestBuilder implements RequestBuilderInterface
 {
-
     /**
-     * @param array $state State array received from Zookeeper or Solr
-     * @param array $liveNodes
-     * @return mixed
+     * Build request for a select query.
+     *
+     * @param QueryInterface $query
+     *
+     * @return AdminRequest
      */
-    public function update(array $state, array $liveNodes);
+    public function build(QueryInterface $query)
+    {
+        $request = new AdminRequest();
+        $request->setHandler($query->getHandler());
 
-    /**
-     * @param string $name
-     * @param null   $defaultValue
-     * @return mixed
-     */
-    public function getStateProp(string $name, $defaultValue = null);
+        // Add components to request
+        foreach ($query->getComponents() as $component) {
+            $componentBuilder = $component->getRequestBuilder();
+            if ($componentBuilder) {
+                $request = $componentBuilder->buildComponent($component, $request);
+            }
+        }
+
+        return $request;
+    }
+
 }

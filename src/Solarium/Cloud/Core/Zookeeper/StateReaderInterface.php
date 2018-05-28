@@ -2,7 +2,7 @@
 /**
  * BSD 2-Clause License
  *
- * Copyright (c) 2017 Jeroen Steggink
+ * Copyright (c) 2018 Jeroen Steggink
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,25 +27,47 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+
 namespace Solarium\Cloud\Core\Zookeeper;
 
-/**
- * Interface StateInterface
- */
-interface StateInterface
+use Solarium\Cloud\Core\Client\CollectionEndpoint;
+use Symfony\Component\Cache\Adapter\AdapterInterface;
+
+interface StateReaderInterface
 {
+    public function getCollectionAliases(): array;
+
+    public function getCollectionList(): array;
+
+    public function getClusterState(): array;
+
+    public function getClusterProperties(): array;
+
+    public function getLiveNodes(): array;
+
+    public function getActiveBaseUris(string $collection = null): array;
+
+    public function getCollectionShardLeadersBaseUri(string $collection): array;
+
+    public function getEndpoints(): array;
+
+    public function getCollectionEndpoint(string $collection): CollectionEndpoint;
 
     /**
-     * @param array $state State array received from Zookeeper or Solr
-     * @param array $liveNodes
-     * @return mixed
+     * Returns the official collection name
+     * @param  string $collection Collection name
+     * @return string Name of the collection. Returns an empty string if it's not found.
      */
-    public function update(array $state, array $liveNodes);
+    public function getCollectionName(string $collection): string;
 
     /**
-     * @param string $name
-     * @param null   $defaultValue
-     * @return mixed
+     * @return AdapterInterface
      */
-    public function getStateProp(string $name, $defaultValue = null);
+    public function getCache(): AdapterInterface;
+
+    /**
+     * @param AdapterInterface $cache
+     */
+    public function setCache(AdapterInterface $cache);
+
 }

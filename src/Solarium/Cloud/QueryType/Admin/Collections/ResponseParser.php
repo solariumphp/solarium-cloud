@@ -2,7 +2,7 @@
 /**
  * BSD 2-Clause License
  *
- * Copyright (c) 2017 Jeroen Steggink
+ * Copyright (c) 2018 Jeroen Steggink
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,25 +27,46 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-namespace Solarium\Cloud\Core\Zookeeper;
+namespace Solarium\Cloud\QueryType\Admin\Collections;
 
-/**
- * Interface StateInterface
- */
-interface StateInterface
+use Solarium\Core\Query\AbstractResponseParser;
+use Solarium\Core\Query\ResponseParserInterface;
+
+class ResponseParser extends AbstractResponseParser implements ResponseParserInterface
 {
 
     /**
-     * @param array $state State array received from Zookeeper or Solr
-     * @param array $liveNodes
+     * Get a Result object for the given data.
+     *
+     * When this method is called the actual response parsing is started.
+     *
+     * @param \Solarium\Core\Query\Result\Result $result
+     *
      * @return mixed
      */
-    public function update(array $state, array $liveNodes);
+    public function parse($result)
+    {
+        $data = $result->getData();
 
-    /**
-     * @param string $name
-     * @param null   $defaultValue
-     * @return mixed
-     */
-    public function getStateProp(string $name, $defaultValue = null);
+        /*
+         * @var Query
+         */
+        $query = $result->getQuery();
+
+        // Component results
+        $components = [];
+        foreach ($query->getComponents() as $component) {
+            $componentParser = $component->getResponseParser();
+            if ($componentParser) {
+                $components[$component->getType()] = $componentParser->parse($query, $component, $data);
+            }
+        }
+
+        $result->setComponents($components);
+
+        return $this->addHeaderInfo(
+            $data,
+            []
+        );
+    }
 }

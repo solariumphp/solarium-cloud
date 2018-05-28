@@ -2,7 +2,7 @@
 /**
  * BSD 2-Clause License
  *
- * Copyright (c) 2017 Jeroen Steggink
+ * Copyright (c) 2018 Jeroen Steggink
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,25 +27,30 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-namespace Solarium\Cloud\Core\Zookeeper;
+namespace Solarium\Cloud\Component\Admin\Collections\ResponseParser;
 
-/**
- * Interface StateInterface
- */
-interface StateInterface
+use Solarium\Cloud\Component\Admin\Collections\Result\ClusterStatus as ClusterStatusResult;
+use Solarium\Cloud\Core\Zookeeper\ClusterState;
+use Solarium\Component\ResponseParser\ComponentParserInterface;
+use Solarium\Core\Query\AbstractQuery;
+
+class ClusterStatus implements ComponentParserInterface
 {
+    protected $clusterStatus;
 
     /**
-     * @param array $state State array received from Zookeeper or Solr
-     * @param array $liveNodes
-     * @return mixed
+     * Parse result data into result objects.
+     *
+     * @param AbstractQuery $query
+     * @param object $component
+     * @param array $data
+     *
+     * @return ClusterStatusResult|null
      */
-    public function update(array $state, array $liveNodes);
+    public function parse($query, $component, $data)
+    {
+        $this->clusterStatus = new ClusterState($data['cluster']);
 
-    /**
-     * @param string $name
-     * @param null   $defaultValue
-     * @return mixed
-     */
-    public function getStateProp(string $name, $defaultValue = null);
+        return new ClusterStatusResult($this->clusterStatus);
+    }
 }
