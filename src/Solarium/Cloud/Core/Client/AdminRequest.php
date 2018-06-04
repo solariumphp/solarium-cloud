@@ -35,7 +35,7 @@ use Solarium\Exception\RuntimeException;
 /**
  * Class for describing a request.
  */
-class AdminRequest extends \Solarium\Core\Client\Request
+class AdminRequest extends Request
 {
 
 

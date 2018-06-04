@@ -41,7 +41,11 @@ class CollectionState extends AbstractState
     protected $name;
     /** @var  ShardState[] */
     protected $shards;
-    /** @var  array Array of aliases for collection */
+
+    /**
+     * @param array $collection
+     * @param array $liveNodes
+     */
 
     public function __construct(array $collection, array $liveNodes)
     {

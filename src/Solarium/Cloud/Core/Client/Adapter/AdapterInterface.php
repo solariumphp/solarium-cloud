@@ -29,6 +29,7 @@
 
 namespace Solarium\Cloud\Core\Client\Adapter;
 
+use Solarium\Cloud\Core\Client\AbstractEndpoint;
 use Solarium\Core\ConfigurableInterface;
 use Solarium\Core\Client\Request;
 use Solarium\Core\Client\Response;
@@ -55,9 +56,11 @@ interface AdapterInterface extends ConfigurableInterface
      * Execute a request.
      *
      * @param Request            $request
-     * @param CollectionEndpoint $endpoint
+     * @param AbstractEndpoint $endpoint
      *
      * @return Response
+     *
+     * @throws \Solarium\Exception\HttpException
      */
-    public function execute($request, $endpoint): \Solarium\Core\Client\Response;
+    public function execute($request, $endpoint): Response;
 }

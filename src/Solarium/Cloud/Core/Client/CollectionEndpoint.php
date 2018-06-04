@@ -102,7 +102,7 @@ class CollectionEndpoint extends AbstractEndpoint
      */
     protected function getCollectionState(): ClusterState
     {
-        if(array_key_exists($this->stateReader->getClusterState(), $this->collection)) {
+        if (!empty($this->stateReader->getClusterState()[$this->collection])) {
             return $this->stateReader->getClusterState()[$this->collection];
         }
         else {

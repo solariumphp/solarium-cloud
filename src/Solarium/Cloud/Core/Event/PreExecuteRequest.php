@@ -29,7 +29,6 @@
 
 namespace Solarium\Cloud\Core\Event;
 
-use Solarium\Cloud\Core\Client\CollectionEndpoint;
 use Solarium\Cloud\Core\Client\EndpointInterface;
 use Symfony\Component\EventDispatcher\Event;
 use Solarium\Core\Client\Request;

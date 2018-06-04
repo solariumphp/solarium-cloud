@@ -263,6 +263,8 @@ class CloudClient extends Configurable implements CloudClientInterface
      * @param Request $request
      *
      * @return Response
+     *
+     * @throws \Solarium\Exception\HttpException
      */
     public function executeRequest(\Solarium\Core\Client\Request $request): \Solarium\Core\Client\Response
     {
@@ -294,6 +296,8 @@ class CloudClient extends Configurable implements CloudClientInterface
      * @param AdminRequest $request
      *
      * @return Response
+     *
+     * @throws \Solarium\Exception\HttpException
      * @throws \Solarium\Exception\InvalidArgumentException
      * @throws \Solarium\Exception\UnexpectedValueException
      */
@@ -782,6 +786,7 @@ class CloudClient extends Configurable implements CloudClientInterface
      *
      * @param  QueryInterface $query
      * @return ResultInterface
+     * @throws \Solarium\Exception\HttpException
      * @throws \Solarium\Exception\InvalidArgumentException
      * @throws \Solarium\Exception\UnexpectedValueException
      */
@@ -810,6 +815,7 @@ class CloudClient extends Configurable implements CloudClientInterface
      *
      * @param  QueryInterface $query
      * @return ResultInterface
+     * @throws \Solarium\Exception\HttpException
      * @throws \Solarium\Exception\InvalidArgumentException
      * @throws \Solarium\Exception\UnexpectedValueException
      */
@@ -851,6 +857,7 @@ class CloudClient extends Configurable implements CloudClientInterface
      * @param QueryInterface|\Solarium\QueryType\Ping\Query $query
      *
      * @return \Solarium\QueryType\Ping\Result
+     * @throws \Solarium\Exception\HttpException
      * @throws \Solarium\Exception\InvalidArgumentException
      * @throws \Solarium\Exception\UnexpectedValueException
      */
@@ -879,6 +886,7 @@ class CloudClient extends Configurable implements CloudClientInterface
      * @param QueryInterface|\Solarium\QueryType\Update\Query\Query $query
      *
      * @return \Solarium\QueryType\Update\Result
+     * @throws \Solarium\Exception\HttpException
      * @throws \Solarium\Exception\InvalidArgumentException
      * @throws \Solarium\Exception\UnexpectedValueException
      */
@@ -906,6 +914,7 @@ class CloudClient extends Configurable implements CloudClientInterface
      * @param QueryInterface|\Solarium\QueryType\Select\Query\Query $query
      *
      * @return \Solarium\QueryType\Select\Result\Result
+     * @throws \Solarium\Exception\HttpException
      * @throws \Solarium\Exception\InvalidArgumentException
      * @throws \Solarium\Exception\UnexpectedValueException
      */
@@ -933,6 +942,7 @@ class CloudClient extends Configurable implements CloudClientInterface
      * @param QueryInterface|\Solarium\QueryType\MoreLikeThis\Query $query
      *
      * @return \Solarium\QueryType\MoreLikeThis\Result
+     * @throws \Solarium\Exception\HttpException
      * @throws \Solarium\Exception\InvalidArgumentException
      * @throws \Solarium\Exception\UnexpectedValueException
      */
@@ -950,6 +960,7 @@ class CloudClient extends Configurable implements CloudClientInterface
      * @param QueryInterface|\Solarium\QueryType\Analysis\Query\Document|\Solarium\QueryType\Analysis\Query\Field $query
      *
      * @return \Solarium\QueryType\Analysis\Result\Document|\Solarium\QueryType\Analysis\Result\Field
+     * @throws \Solarium\Exception\HttpException
      * @throws \Solarium\Exception\InvalidArgumentException
      * @throws \Solarium\Exception\UnexpectedValueException
      */
@@ -967,6 +978,7 @@ class CloudClient extends Configurable implements CloudClientInterface
      * @param QueryInterface|\Solarium\QueryType\Terms\Query $query
      *
      * @return \Solarium\QueryType\Terms\Result
+     * @throws \Solarium\Exception\HttpException
      * @throws \Solarium\Exception\InvalidArgumentException
      * @throws \Solarium\Exception\UnexpectedValueException
      */
@@ -984,6 +996,7 @@ class CloudClient extends Configurable implements CloudClientInterface
      * @param QueryInterface|\Solarium\QueryType\Suggester\Query $query
      *
      * @return \Solarium\QueryType\Suggester\Result\Result
+     * @throws \Solarium\Exception\HttpException
      * @throws \Solarium\Exception\InvalidArgumentException
      * @throws \Solarium\Exception\UnexpectedValueException
      */
@@ -1001,6 +1014,7 @@ class CloudClient extends Configurable implements CloudClientInterface
      * @param QueryInterface|\Solarium\QueryType\Extract\Query $query
      *
      * @return \Solarium\QueryType\Extract\Result
+     * @throws \Solarium\Exception\HttpException
      * @throws \Solarium\Exception\InvalidArgumentException
      * @throws \Solarium\Exception\UnexpectedValueException
      */
@@ -1018,6 +1032,7 @@ class CloudClient extends Configurable implements CloudClientInterface
      * @param QueryInterface|\Solarium\QueryType\RealtimeGet\Query $query
      *
      * @return \Solarium\QueryType\RealtimeGet\Result
+     * @throws \Solarium\Exception\HttpException
      * @throws \Solarium\Exception\InvalidArgumentException
      * @throws \Solarium\Exception\UnexpectedValueException
      */
