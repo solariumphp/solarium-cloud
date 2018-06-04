@@ -1316,10 +1316,10 @@ class CloudClient extends Configurable implements CloudClientInterface
         foreach ($this->options as $name => $value) {
             switch ($name) {
                 case 'solrurls':
-                    $this->solrUrls = explode($value, ',');
+                    $this->solrUrls = explode(',', $value);
                     break;
                 case 'zkhosts':
-                    $this->zkHosts = explode($value, ',');
+                    $this->zkHosts = explode(',', $value);
                     break;
                 case 'collection':
                     $this->collection = $value;
