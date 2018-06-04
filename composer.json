@@ -1,7 +1,7 @@
 {
     "name": "solarium/solarium-cloud",
     "type": "library",
-    "description": "PHP Apache SolrCloud client",
+    "description": "PHP SolrCloud client",
     "keywords": ["solr", "solrcloud", "solarium", "solr-client", "search", "zookeeper", "zookeeper-client", "php"],
     "homepage": "https://github.com/solariumphp/solarium-cloud",
     "license": "BSD-2-Clause",
@@ -18,7 +18,7 @@
     ],
     "require": {
         "php": "~7.0",
-        "solarium/solarium": "~3.8.1",
+        "solarium/solarium": "~4.0",
         "symfony/cache": "~3.4"
     },
     "require-dev": {
