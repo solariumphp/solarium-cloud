@@ -1,7 +1,7 @@
-# solarium-cloud
+# solarium-cloud (deprecated)
 Solarium extension to connect to SolrCloud via Apache Zookeeper.
 
-This is an alpha version of solarium-cloud.
+This extension is deprecated. Solarium itself now supports Solr Cloud and its APIs directly.  
 
 ## Requirement
 The extension requires the PHP Zookeeper extension, which can be found here:
